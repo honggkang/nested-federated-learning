@@ -56,7 +56,7 @@ parser.add_argument('--model_name', type=str, default='wide_resnet101_2') # wide
 parser.add_argument('--device_id', type=str, default='1')
 parser.add_argument('--learnable_step', type=bool, default=True)
 parser.add_argument('--pretrained', type=bool, default=True)
-parser.add_argument('--wandb', type=bool, default=True)
+parser.add_argument('--wandb', type=bool, default=False)
 
 parser.add_argument('--dataset', type=str, default='cifar10') # stl10, cifar10, svhn
 parser.add_argument('--method', type=str, default='DD') # DD, W, WD / fjord, depthfl
@@ -185,7 +185,6 @@ def main():
     Steps = []
 
     for i in range(len(local_models)):
-        local_models[i].to(args.device)
         local_models[i].train()
         BN = {}
         Step = {}
@@ -197,6 +196,7 @@ def main():
                 Step[key] = w[key]
         BN_layers.append(copy.deepcopy(BN))
         Steps.append(copy.deepcopy(Step))
+        local_models[i].to(args.device)
 
     if args.model_name == 'resnet18':
         net_glob = resnet18wd(args.s2D[-1][0], 1, True, num_classes=args.num_classes)        
@@ -262,7 +262,7 @@ def main():
             # p_select_weight = extract_submodel_weight_from_global(net = copy.deepcopy(net_glob), BN_layer=BN_layers, p=p_select, model_i=model_idx)
             local_models[model_idx].load_state_dict(p_select_weight)            
 
-    net_glob.to(args.device)
+    # net_glob.to(args.device)
     # torchsummary.summary(local_models[0], (3, 32, 32)) # device='cpu'
     net_glob.train()
 

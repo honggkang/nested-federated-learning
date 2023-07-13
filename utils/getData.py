@@ -2,7 +2,7 @@ import numpy as np
 from torchvision import datasets, transforms
 from math import sqrt
 
-import lasagne
+# import lasagne
 import pickle
 import os
 
@@ -96,64 +96,64 @@ def cifar_noniid(args, dataset):
             dict_users[i] = np.concatenate((dict_users[i], idxs[rand*num_imgs:(rand+1)*num_imgs]), axis=0)
     return dict_users
 
-def load_validation_data(data_folder, mean_image, img_size=32):
-    test_file = os.path.join(data_folder, 'val_data')        
+# def load_validation_data(data_folder, mean_image, img_size=32):
+#     test_file = os.path.join(data_folder, 'val_data')        
 
-    d = unpickle(test_file)
-    x = d['data']
-    y = d['labels']
-    x = x / np.float32(255)
+#     d = unpickle(test_file)
+#     x = d['data']
+#     y = d['labels']
+#     x = x / np.float32(255)
 
-    # Labels are indexed from 1, shift it so that indexes start at 0
-    y = np.array([i-1 for i in y])
+#     # Labels are indexed from 1, shift it so that indexes start at 0
+#     y = np.array([i-1 for i in y])
 
-    # Remove mean (computed from training data) from images
-    x -= mean_image
+#     # Remove mean (computed from training data) from images
+#     x -= mean_image
 
-    img_size2 = img_size * img_size
+#     img_size2 = img_size * img_size
 
-    x = np.dstack((x[:, :img_size2], x[:, img_size2:2*img_size2], x[:, 2*img_size2:]))
-    x = x.reshape((x.shape[0], img_size, img_size, 3)).transpose(0, 3, 1, 2)
+#     x = np.dstack((x[:, :img_size2], x[:, img_size2:2*img_size2], x[:, 2*img_size2:]))
+#     x = x.reshape((x.shape[0], img_size, img_size, 3)).transpose(0, 3, 1, 2)
 
-    return dict(
-        X_test=lasagne.utils.floatX(x),
-        Y_test=y.astype('int32'))
+#     return dict(
+#         X_test=lasagne.utils.floatX(x),
+#         Y_test=y.astype('int32'))
 
 
-def load_databatch(data_folder, idx, img_size=32):
-    data_file = os.path.join(data_folder, 'train_data_batch_')
+# def load_databatch(data_folder, idx, img_size=32):
+#     data_file = os.path.join(data_folder, 'train_data_batch_')
 
-    d = unpickle(data_file + str(idx))
-    x = d['data']
-    y = d['labels']
-    mean_image = d['mean']
+#     d = unpickle(data_file + str(idx))
+#     x = d['data']
+#     y = d['labels']
+#     mean_image = d['mean']
 
-    x = x/np.float32(255)
-    mean_image = mean_image/np.float32(255)
+#     x = x/np.float32(255)
+#     mean_image = mean_image/np.float32(255)
 
-    # Labels are indexed from 1, shift it so that indexes start at 0
-    y = [i-1 for i in y]
-    data_size = x.shape[0]
+#     # Labels are indexed from 1, shift it so that indexes start at 0
+#     y = [i-1 for i in y]
+#     data_size = x.shape[0]
 
-    x -= mean_image
+#     x -= mean_image
 
-    img_size2 = img_size * img_size
+#     img_size2 = img_size * img_size
 
-    x = np.dstack((x[:, :img_size2], x[:, img_size2:2*img_size2], x[:, 2*img_size2:]))
-    x = x.reshape((x.shape[0], img_size, img_size, 3)).transpose(0, 3, 1, 2)
+#     x = np.dstack((x[:, :img_size2], x[:, img_size2:2*img_size2], x[:, 2*img_size2:]))
+#     x = x.reshape((x.shape[0], img_size, img_size, 3)).transpose(0, 3, 1, 2)
 
-    # create mirrored images
-    X_train = x[0:data_size, :, :, :]
-    Y_train = y[0:data_size]
-    X_train_flip = X_train[:, :, :, ::-1]
-    Y_train_flip = Y_train
-    X_train = np.concatenate((X_train, X_train_flip), axis=0)
-    Y_train = np.concatenate((Y_train, Y_train_flip), axis=0)
+#     # create mirrored images
+#     X_train = x[0:data_size, :, :, :]
+#     Y_train = y[0:data_size]
+#     X_train_flip = X_train[:, :, :, ::-1]
+#     Y_train_flip = Y_train
+#     X_train = np.concatenate((X_train, X_train_flip), axis=0)
+#     Y_train = np.concatenate((Y_train, Y_train_flip), axis=0)
 
-    return dict(
-        X_train=lasagne.utils.floatX(X_train),
-        Y_train=Y_train.astype('int32'),
-        mean=mean_image)
+#     return dict(
+#         X_train=lasagne.utils.floatX(X_train),
+#         Y_train=Y_train.astype('int32'),
+#         mean=mean_image)
     
 
 def getDataset(args):

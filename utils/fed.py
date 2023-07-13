@@ -147,22 +147,23 @@ class LocalUpdateM_ft(object): # Fine-tuning for ResNet
 
         for iter in range(self.args.local_ep):
             batch_loss = []
-
+                
             for batch_idx, (images, labels) in enumerate(self.ldr_train):
                 images, labels = images.to(self.args.device), labels.to(self.args.device)
                 net.zero_grad()
                 logits, log_probs = net(images)
                 loss = F.cross_entropy(logits, labels)
 
+                optimizer.zero_grad()
                 loss.backward()
-                torch.nn.utils.clip_grad_norm(net.parameters(), 1)
+                torch.nn.utils.clip_grad_norm_(net.parameters(), 1)
 
                 optimizer.step()
-                optimizer.zero_grad()
                 scheduler.step()
 
                 batch_loss.append(loss.item())
             epoch_loss.append(sum(batch_loss)/len(batch_loss))
+        net.to('cpu')
         return net.state_dict(), sum(epoch_loss) / len(epoch_loss), scheduler.state_dict(), optimizer.state_dict()
     
 
