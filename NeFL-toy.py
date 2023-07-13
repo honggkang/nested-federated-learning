@@ -11,7 +11,6 @@ from torchvision.models import ResNet18_Weights, ResNet34_Weights, ResNet101_Wei
 import argparse
 import os
 import torchsummary
-from math import sqrt
 import wandb
 from datetime import datetime
 import numpy as np
@@ -21,8 +20,8 @@ import torch.nn as nn
 import copy
 
 from models import *
-from fed import *
-from getData import *
+from utils.fed import *
+from utils.getData import *
 from utils.util import test_img, extract_submodel_weight_from_globalM, get_logger
 from utils.NeFedAvg import NeFedAvg
 # from AutoAugment.autoaugment import ImageNetPolicy
@@ -52,7 +51,7 @@ parser.add_argument('--model_name', type=str, default='resnet56') # wide_resnet1
 parser.add_argument('--device_id', type=str, default='0')
 parser.add_argument('--learnable_step', type=bool, default=True) # False: FjORD / HeteroFL / DepthFL
 parser.add_argument('--pretrained', type=bool, default=False)
-parser.add_argument('--wandb', type=bool, default=True)
+parser.add_argument('--wandb', type=bool, default=False)
 
 parser.add_argument('--dataset', type=str, default='cifar10') # stl10, cifar10, svhn
 parser.add_argument('--method', type=str, default='DD') # DD, W, WD / fjord, depthfl
@@ -80,96 +79,7 @@ len(shape) = 1: bn1.weight/bias/running_mean/var [16/32/...] / (linear.bias) [10
 len(shape) = 0: bn1.num_batches_tracked
 '''
 
-if args.dataset =='cifar10':
-    ## CIFAR
-    transform_train = transforms.Compose([
-        transforms.RandomCrop(32, padding=4), # transforms.Resize(256), transforms.RandomCrop(224),
-        transforms.RandomHorizontalFlip(),
-        transforms.ToTensor(),
-        transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
-    ])
-
-    transform_test = transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
-    ])
-    dataset_train = datasets.CIFAR10('/home/hong/NeFL/.data/cifar', train=True, download=True, transform=transform_train)
-    dataset_test = datasets.CIFAR10('/home/hong/NeFL/.data/cifar', train=False, download=True, transform=transform_test)
-
-elif args.dataset == 'svhn':
-    ### SVHN
-    transform_train = transforms.Compose([
-            transforms.Pad(padding=2),
-            transforms.RandomCrop(size=(32, 32)),
-            transforms.ColorJitter(brightness=63. / 255., saturation=[0.5, 1.5], contrast=[0.2, 1.8]),
-            transforms.ToTensor(),
-            transforms.Normalize((0.4376821, 0.4437697, 0.47280442), (0.19803012, 0.20101562, 0.19703614))
-        ])
-
-    transform_test = transforms.Compose([
-            transforms.ToTensor(),
-            transforms.Normalize((0.4376821, 0.4437697, 0.47280442), (0.19803012, 0.20101562, 0.19703614))
-        ])
-    dataset_train = datasets.SVHN('/home/hong/NeFL/.data/svhn', split='train', download=True, transform=transform_train)
-    dataset_test = datasets.SVHN('/home/hong/NeFL/.data/svhn', split='test', download=True, transform=transform_test)
-
-elif args.dataset == 'stl10':
-    ### STL10
-    transform_train = transforms.Compose([
-                    transforms.RandomCrop(96, padding=4),
-                    transforms.RandomHorizontalFlip(),
-                    transforms.ToTensor(),
-                    transforms.Normalize([0.4914, 0.4822, 0.4465],
-                                        [0.2471, 0.2435, 0.2616])
-                ])
-    transform_test = transforms.Compose([
-                    transforms.ToTensor(),
-                    transforms.Normalize([0.4914, 0.4822, 0.4465],
-                                        [0.2471, 0.2435, 0.2616])
-            ])
-    dataset_train = datasets.STL10('/home/hong/NeFL/.data/stl10', split='train', download=True, transform=transform_train)
-    dataset_test = datasets.STL10('/home/hong/NeFL/.data/stl10', split='test', download=True, transform=transform_test)
-
-### downsampled ImageNet
-# imagenet_data = datasets.ImageNet('/home')
-    
-### Flowers
-# tranform_train = transforms.Compose([
-#                                     #   transforms.RandomRotation(30),
-#                                     #   transforms.RandomResizedCrop(224),
-#                                       transforms.RandomHorizontalFlip(),
-#                                       transforms.ToTensor(), 
-#                                       transforms.Normalize([0.485, 0.456, 0.406], 
-#                                                            [0.229, 0.224, 0.225])
-#                                      ])
-    
-# tranform_test = transforms.Compose([
-#                                     #   transforms.Resize(256),
-#                                     #   transforms.CenterCrop(224),
-#                                       transforms.ToTensor(),
-#                                       transforms.Normalize([0.485, 0.456, 0.406], 
-#                                                            [0.229, 0.224, 0.225])
-#                                      ])
-
-# dataset_train = datasets.Flowers102('/home/hong/NeFL/.data/flowers102', download=True, transform=tranform_train)
-# dataset_test = datasets.Flowers102('/home/hong/NeFL/.data/flowers102', split='test', download=True, transform=tranform_test)
-# split='train',
-
-### Food 101
-# tranform_train = transforms.Compose([transforms.RandomRotation(30),
-#                                        transforms.RandomResizedCrop(224),
-#                                        transforms.RandomHorizontalFlip(),ImageNetPolicy(),
-#                                        transforms.ToTensor(),
-#                                        transforms.Normalize([0.485, 0.456, 0.406],
-#                                                             [0.229, 0.224, 0.225])])
-
-# tranform_test = transforms.Compose([transforms.Resize(255),
-#                                       transforms.CenterCrop(224),
-#                                       transforms.ToTensor(),
-#                                       transforms.Normalize([0.485, 0.456, 0.406],
-#                                                            [0.229, 0.224, 0.225])])
-# dataset_train = datasets.Food101('/home/hong/NeFL/.data/food101', split='train', download=True, transform=tranform_train)
-# dataset_test = datasets.Food101('/home/hong/NeFL/.data/food101', split='test', download=True, transform=tranform_test)
+dataset_train, dataset_test = getDataset(args)
 
 if args.noniid:
     dict_users = cifar_noniid(args, dataset_train)
@@ -181,43 +91,8 @@ else:
 def main():
     # args.ps = [sqrt(0.2), sqrt(0.4), sqrt(0.6), sqrt(0.8), 1]
     # args.ps = [0.2, 0.4, 0.6, 0.8, 1]
-    
-    if args.method == 'W':
-        args.ps = [sqrt(0.2), sqrt(0.4), sqrt(0.6), sqrt(0.8), 1]
-        args.s2D = [ # full 56  NeFL-W
-                    [ [[1, 1, 1, 1, 1, 1, 1, 1, 1] for _ in range(3)] ],
-                    [ [[1, 1, 1, 1, 1, 1, 1, 1, 1] for _ in range(3)] ],
-                    [ [[1, 1, 1, 1, 1, 1, 1, 1, 1] for _ in range(3)] ],
-                    [ [[1, 1, 1, 1, 1, 1, 1, 1, 1] for _ in range(3)] ],
-                    [ [[1, 1, 1, 1, 1, 1, 1, 1, 1] for _ in range(3)] ]
-        ]
-    elif args.method =='WD':
-        args.ps = [sqrt(0.464938491), sqrt(0.607811604), sqrt(0.777135864), sqrt(0.902901024), 1] # resnet 56 (MA4)
-        args.s2D = [ # 56 MA5 NeFL-WD
-                    [ [[1, 1, 1, 1, 0, 0, 0, 0, 0] for _ in range(3)] ],
-                    [ [[1, 1, 1, 1, 1, 1, 0, 0, 0] for _ in range(3)] ],
-                    [ [[1, 1, 1, 1, 1, 1, 1, 0, 0] for _ in range(3)] ],
-                    [ [[1, 1, 1, 1, 1, 1, 1, 1, 0] for _ in range(3)] ],
-                    [ [[1, 1, 1, 1, 1, 1, 1, 1, 1] for _ in range(3)] ]
-            ]
-    elif args.method=='DD':
-        args.ps = [1, 1, 1, 1, 1]
-        # args.s2D = [ # 56 DD
-        #             [ [[1, 1, 0, 0, 0, 0, 0, 0, 0] for _ in range(3)] ], # 0.20223
-        #             [ [[1, 1, 1, 0, 0, 0, 0, 0, 0], [1, 1, 1, 0, 0, 0, 0, 0, 0], [1,1,1,1,0,0,0,0,0]] ], # 0.40293
-        #             [ [[1, 1, 1, 1, 0, 0, 0, 0, 0], [1, 1, 1, 1, 0, 0, 0, 0, 0], [1,1,1,1,1,1,0,0,0]] ], # 0.60363
-        #             [ [[1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 0], [1, 1, 1, 1, 1, 1, 1, 0, 0]] ], # 80478
-        #             [ [[1, 1, 1, 1, 1, 1, 1, 1, 1] for _ in range(3)] ]
-        #             ]
-        args.s2D = [ # 56 DD-2
-            [ [[1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 0, 0, 0, 0, 0], [1,0,0,0,0,0,0,0,0]] ], # 0.19735
-            [ [[1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 0, 0, 0, 0], [1,1,1,0,0,0,0,0,0]] ], # 0.39258
-            [ [[1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 0, 0], [1,1,1,1,1,0,0,0,0]] ], # 0.60956
-            [ [[1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 0], [1, 1, 1, 1, 1, 1, 1, 0, 0]] ], # 0.80478
-            [ [[1, 1, 1, 1, 1, 1, 1, 1, 1] for _ in range(3)] ]
-            ]
 
-        
+    args.ps, args.s2D = get_submodel_info(args)
     args.num_models = len(args.ps)
 
     local_models = []
@@ -237,7 +112,7 @@ def main():
             local_models.append(resnet34wd(args.s2D[i][0], args.ps[i], args.learnable_step, args.num_classes))
     elif args.model_name == 'resnet101':
         for i in range(len(args.ps)):
-            local_models.append(resnet101Mp(args.s2D[i][0], args.num_classes, args.ps[i]))
+            local_models.append(resnet101wd(args.s2D[i][0], args.ps[i], args.learnable_step, args.num_classes))
     elif args.model_name == 'wide_resnet101_2':
         for i in range(len(args.ps)):
             local_models.append(resnet101_2wd(args.s2D[i][0], args.ps[i], args.learnable_step, args.num_classes))
@@ -288,7 +163,7 @@ def main():
             w_glob[key] = w_glob_temp[key]
         net_glob.load_state_dict(w_glob)
     elif args.model_name== 'resnet101':
-        net_glob = resnet101M(args.s2D[-1][0], num_classes=10)
+        net_glob = resnet101wd(args.s2D[-1][0], 1, True, num_classes=args.num_classes)
         w_glob = net_glob.state_dict()
         if args.pretrained:
             net_glob_temp = Presnet101(weights=ResNet101_Weights.IMAGENET1K_V2) ########

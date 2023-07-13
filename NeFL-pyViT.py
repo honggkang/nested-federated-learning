@@ -3,10 +3,9 @@ from torchvision import datasets, transforms
 from models.pyvit import my_vit_b_16
 from torchvision.models import vit_b_16, ViT_B_16_Weights
 
-from torch.nn import Linear
+from collections import OrderedDict
+import torch.nn as nn
 import torch
-# from torch import nn, autograd
-# from torch.utils.data import DataLoader, Dataset
 import numpy as np
 import random
 import copy
@@ -18,14 +17,11 @@ from math import sqrt
 import wandb
 from datetime import datetime
 
-from getData import *
 from models import *
-from fed import *
+from utils.fed import *
+from utils.getData import *
 from utils.util import test_img, extract_submodel_weight_from_globalM_vitpy, get_logger
-from utils.avg_temp import MAAvg_pyvit
-
-from collections import OrderedDict
-import torch.nn as nn
+from utils.NeFedAvg import NeFedAvg_vit
 
 
 parser = argparse.ArgumentParser()
@@ -325,7 +321,7 @@ def main():
             loss_locals.append(copy.deepcopy(loss))
             scheduler_all[idx] = copy.deepcopy(new_scheduler_state)
             optimizer_all[idx] = copy.deepcopy(new_optimizer_state)
-        w_glob, Norm_layers, Steps = MAAvg_pyvit(w_locals, Norm_layers, Steps, args, com_layers, sing_layers, local_models)
+        w_glob, Norm_layers, Steps = NeFedAvg_vit(w_locals, Norm_layers, Steps, args, com_layers, sing_layers, local_models)
 
         net_glob.load_state_dict(w_glob)
         loss_avg = sum(loss_locals) / len(loss_locals)

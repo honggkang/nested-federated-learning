@@ -11,7 +11,6 @@ import torch
 import copy
 
 from torchvision import datasets, transforms
-from getData import *
 import argparse
 import os
 import torchsummary
@@ -20,7 +19,8 @@ import wandb
 from datetime import datetime
 
 from models import *
-from fed import *
+from utils.fed import *
+from utils.getData import *
 from utils.util import test_img, extract_submodel_weight_from_globalH, get_logger
 from utils.NeFedAvg import HeteroFL_Avg
 
@@ -125,6 +125,7 @@ elif args.dataset == 'stl10':
     dataset_train = datasets.STL10('/home/hong/NeFL/.data/stl10', split='train', download=True, transform=transform_train)
     dataset_test = datasets.STL10('/home/hong/NeFL/.data/stl10', split='test', download=True, transform=transform_test)
 
+dataset_train, dataset_test = getDataset(args)
 dict_users = cifar_iid(dataset_train, args.num_users, args.rs)
 # img_size = dataset_train[0][0].shape
 

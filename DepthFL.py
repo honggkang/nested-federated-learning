@@ -18,8 +18,8 @@ import wandb
 from datetime import datetime
 
 from models import *
-from fed import *
-from getData import *
+from utils.fed import *
+from utils.getData import *
 from utils.util import test_img, extract_submodel_weight_from_globalH, get_logger
 from utils.NeFedAvg import DepthFL_Avg
 
@@ -115,55 +115,7 @@ len(shape) = 1: bn1.weight/bias/running_mean/var [16/32/...] / (linear.bias) [10
 len(shape) = 0: bn1.num_batches_tracked
 '''
 
-if args.dataset =='cifar10':
-    ## CIFAR
-    transform_train = transforms.Compose([
-        transforms.RandomCrop(32, padding=4), # transforms.Resize(256), transforms.RandomCrop(224),
-        transforms.RandomHorizontalFlip(),
-        transforms.ToTensor(),
-        transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
-    ])
-
-    transform_test = transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
-    ])
-    dataset_train = datasets.CIFAR10('/home/hong/NeFL/.data/cifar', train=True, download=True, transform=transform_train)
-    dataset_test = datasets.CIFAR10('/home/hong/NeFL/.data/cifar', train=False, download=True, transform=transform_test)
-
-elif args.dataset == 'svhn':
-    ### SVHN
-    transform_train = transforms.Compose([
-            transforms.Pad(padding=2),
-            transforms.RandomCrop(size=(32, 32)),
-            transforms.ColorJitter(brightness=63. / 255., saturation=[0.5, 1.5], contrast=[0.2, 1.8]),
-            transforms.ToTensor(),
-            transforms.Normalize((0.4376821, 0.4437697, 0.47280442), (0.19803012, 0.20101562, 0.19703614))
-        ])
-
-    transform_test = transforms.Compose([
-            transforms.ToTensor(),
-            transforms.Normalize((0.4376821, 0.4437697, 0.47280442), (0.19803012, 0.20101562, 0.19703614))
-        ])
-    dataset_train = datasets.SVHN('/home/hong/NeFL/.data/svhn', split='train', download=True, transform=transform_train)
-    dataset_test = datasets.SVHN('/home/hong/NeFL/.data/svhn', split='test', download=True, transform=transform_test)
-
-elif args.dataset == 'stl10':
-    ### STL10
-    transform_train = transforms.Compose([
-                    transforms.RandomCrop(96, padding=4),
-                    transforms.RandomHorizontalFlip(),
-                    transforms.ToTensor(),
-                    transforms.Normalize([0.4914, 0.4822, 0.4465],
-                                        [0.2471, 0.2435, 0.2616])
-                ])
-    transform_test = transforms.Compose([
-                    transforms.ToTensor(),
-                    transforms.Normalize([0.4914, 0.4822, 0.4465],
-                                        [0.2471, 0.2435, 0.2616])
-            ])
-    dataset_train = datasets.STL10('/home/hong/NeFL/.data/stl10', split='train', download=True, transform=transform_train)
-    dataset_test = datasets.STL10('/home/hong/NeFL/.data/stl10', split='test', download=True, transform=transform_test)
+dataset_train, dataset_test = getDataset(args)
 
 dict_users = cifar_iid(dataset_train, args.num_users, args.rs)
 # img_size = dataset_train[0][0].shape

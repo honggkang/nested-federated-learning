@@ -26,10 +26,9 @@ import wandb
 from datetime import datetime
 
 from models import *
-from fed import *
-from getData import *
+from utils.fed import *
+from utils.getData import *
 from utils.util import test_img, extract_submodel_weight_from_globalM2, get_logger
-# from utils.avg_temp import MAAvg
 from utils.NeFedAvg import NeFedAvg
 
 parser = argparse.ArgumentParser()
