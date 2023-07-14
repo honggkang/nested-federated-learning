@@ -42,8 +42,6 @@ def test_img(net_g, datatest, args):
     correct = 0
 
     data_loader = DataLoader(datatest, batch_size=args.bs)
-    l = len(data_loader) # len(data_loader)= 469개, 128*468개 세트, 1개는 96개 들어있음
-    #print(l)
     with torch.no_grad():
       for idx, (data, target) in enumerate(data_loader):
           if 'cuda' in args.device:
