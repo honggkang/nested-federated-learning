@@ -151,8 +151,11 @@ def HeteroFL_Avg(w, args, commonLayers, singularLayers, bnLayers): # [0]: weight
             acc_num[j+1] = acc_num[j] - b[j]
             j += 1
 
-        # print("a", a, "b", b, "acc_num", acc_num)
-        
+        '''
+        a: model rates of activated clients for the singular layer
+        b: count how many of submodels are trained e.g., [1, 1, 2, 3, 3] (submodel0, submodel1, submodel2, submodel3, submodel4)
+        acc_num: cumulative counts of e.g., [10, 9, 8, 6, 3, 0]
+        '''
         
         shape = w_avg[key].shape
         for i in range(1, len(w)):
@@ -161,9 +164,9 @@ def HeteroFL_Avg(w, args, commonLayers, singularLayers, bnLayers): # [0]: weight
                 index = active_model_idx.index(model_index) # it must be index = model_idx             
                 for j in range(index+1):
                     if len(shape) > 1:
-                        li = up(shape[0]*list_ps[j])
+                        li = up(shape[0]*list_ps[j]) # out
                         hi = up(shape[0]*list_ps[j+1])
-                        li2 = up(shape[1]*list_ps[j])
+                        li2 = up(shape[1]*list_ps[j]) # in
                         hi2 = up(shape[1]*list_ps[j+1])
                         if len(shape) == 4:
                             if key == 'conv1.weight': # w[key][out_ch, in_ch, kernel_size, kernel_size]

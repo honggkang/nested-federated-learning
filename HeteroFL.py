@@ -258,13 +258,26 @@ def main():
 
     for ind in range(ti):
         p = args.ps[ind]
-        model_e = copy.deepcopy(local_models[ind])
+        if args.model_name == 'resnet18':
+            s2D = [[1, 1], [1, 1], [1, 1], [1, 1]]
+            model_e = resnet18wd(s2D, args.ps[i], False, args.num_classes)
+        elif args.model_name == 'resnet34':
+            s2D = [[1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1, 1, 1], [1, 1, 1]]
+            model_e = resnet34wd(s2D, args.ps[i], False, args.num_classes)
+        elif args.model_name == 'resnet56':
+            s2D = [[1, 1, 1, 1, 1, 1, 1, 1, 1] for _ in range(3)]
+            model_e = resnet56wd(s2D, args.ps[i], False, args.num_classes)
+        elif args.model_name == 'resnet110':
+            s2D = [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1] for _ in range(3)]
+            model_e = resnet110wd(s2D, args.ps[i], False, args.num_classes)
+        elif args.model_name == 'wide_resnet101_2':
+            s2D = [[1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1]]
+            model_e = resnet101_2wd(s2D, args.ps[i], False, args.num_classes)
         
         f = extract_submodel_weight_from_globalH(net = copy.deepcopy(net_glob), p=p, model_i=ind)
-        # f = p_submodel(net = copy.deepcopy(net_glob), BN_layer=BN_layers, p=p)
-        model_e.load_state_dict(f)
+        model_e.load_state_dict(f, strict=False)
         model_e.to(args.device)
-        model_e = sBN(model_e, dataset_test, args)
+        model_e = sBN(model_e, dataset_test, args) # static batch normalization
         model_e.eval()
         acc_test, loss_test = test_img(model_e, dataset_test, args)
         print("Testing accuracy " + str(ind) + ": {:.2f}".format(acc_test))
