@@ -44,11 +44,11 @@ parser.add_argument('--num_experiment', type=int, default=3, help="the number of
 parser.add_argument('--min_flex_num', type=int, default=2, help="0:0~ max(0,tc-args.min_flex_num)")
 parser.add_argument('--max_flex_num', type=int, default=2, help="0:~4 min(tc+args.max_flex_num+1,5)")
 
-parser.add_argument('--model_name', type=str, default='resnet56') # wide_resnet101_2
+parser.add_argument('--model_name', type=str, default='resnet18') # wide_resnet101_2
 parser.add_argument('--device_id', type=str, default='3')
 
 parser.add_argument('--local_ep', type=int, default=5)
-parser.add_argument('--wandb', type=bool, default=True)
+parser.add_argument('--wandb', type=bool, default=False)
 parser.add_argument('--name', type=str, default='[cifar10][HeteroFL][R56]')
 parser.add_argument('--num_models', type=int, default=5)
 
@@ -260,19 +260,19 @@ def main():
         p = args.ps[ind]
         if args.model_name == 'resnet18':
             s2D = [[1, 1], [1, 1], [1, 1], [1, 1]]
-            model_e = resnet18wd(s2D, args.ps[i], False, args.num_classes)
+            model_e = resnet18wd(s2D, p, False, args.num_classes)
         elif args.model_name == 'resnet34':
             s2D = [[1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1, 1, 1], [1, 1, 1]]
-            model_e = resnet34wd(s2D, args.ps[i], False, args.num_classes)
+            model_e = resnet34wd(s2D, p, False, args.num_classes)
         elif args.model_name == 'resnet56':
             s2D = [[1, 1, 1, 1, 1, 1, 1, 1, 1] for _ in range(3)]
-            model_e = resnet56wd(s2D, args.ps[i], False, args.num_classes)
+            model_e = resnet56wd(s2D, p, False, args.num_classes)
         elif args.model_name == 'resnet110':
             s2D = [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1] for _ in range(3)]
-            model_e = resnet110wd(s2D, args.ps[i], False, args.num_classes)
+            model_e = resnet110wd(s2D, p, False, args.num_classes)
         elif args.model_name == 'wide_resnet101_2':
             s2D = [[1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1]]
-            model_e = resnet101_2wd(s2D, args.ps[i], False, args.num_classes)
+            model_e = resnet101_2wd(s2D, p, False, args.num_classes)
         
         f = extract_submodel_weight_from_globalH(net = copy.deepcopy(net_glob), p=p, model_i=ind)
         model_e.load_state_dict(f, strict=False)
