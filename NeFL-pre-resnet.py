@@ -246,13 +246,13 @@ def main():
         else:
             net_glob_temp = Pwide_resnet101_2(weights=None)
 
-        net_glob_temp.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
+        # net_glob_temp.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
         net_glob_temp.fc = nn.Linear(2048, args.num_classes)
         w_glob_temp = net_glob_temp.state_dict()
         for key in w_glob_temp.keys():
             w_glob[key] = w_glob_temp[key]
         net_glob.load_state_dict(w_glob)
-    torchsummary.summary(net_glob_temp, (3, 32, 32), device='cpu')
+    # torchsummary.summary(net_glob_temp, (3, 32, 32), device='cpu')
 
     if args.pretrained:
         for i in range(len(local_models)):
