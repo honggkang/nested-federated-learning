@@ -252,14 +252,13 @@ def main():
         for key in w_glob_temp.keys():
             w_glob[key] = w_glob_temp[key]
         net_glob.load_state_dict(w_glob)
-    # torchsummary.summary(net_glob_temp, (3, 32, 32), device='cpu')
+    torchsummary.summary(net_glob_temp, (3, 32, 32), device='cpu')
 
     if args.pretrained:
         for i in range(len(local_models)):
             model_idx = i
             p_select = args.ps[model_idx]
             p_select_weight = extract_submodel_weight_from_globalM2(net = copy.deepcopy(net_glob), target_net=copy.deepcopy(local_models[model_idx]), BN_layer=BN_layers, Step_layer=Steps, model_i=model_idx)
-            # p_select_weight = extract_submodel_weight_from_global(net = copy.deepcopy(net_glob), BN_layer=BN_layers, p=p_select, model_i=model_idx)
             local_models[model_idx].load_state_dict(p_select_weight)            
 
     # net_glob.to(args.device)
@@ -316,7 +315,7 @@ def main():
             else:
                 dev_spec_idx = min(idx//(args.num_users//args.num_models), args.num_models-1)
                 model_idx = random.choice(mlist[max(0,dev_spec_idx-args.min_flex_num):min(len(args.ps),dev_spec_idx+1+args.max_flex_num)])
-            p_select = args.ps[model_idx]
+            # p_select = args.ps[model_idx]
             model_select = local_models[model_idx]
             p_select_weight = extract_submodel_weight_from_globalM2(net = copy.deepcopy(net_glob), target_net=copy.deepcopy(model_select), BN_layer=BN_layers, Step_layer=Steps, model_i=model_idx)
 
@@ -346,8 +345,8 @@ def main():
                 ti = args.num_models
 
             for ind in range(ti):
-                p = args.ps[ind]
-                model_e = copy.deepcopy(local_models[ind])               
+                # p = args.ps[ind]
+                model_e = copy.deepcopy(local_models[ind])
                 f = extract_submodel_weight_from_globalM2(net = copy.deepcopy(net_glob), target_net=copy.deepcopy(model_e), BN_layer=BN_layers, Step_layer=Steps, model_i=ind)
                 model_e.load_state_dict(f)
                 model_e.eval()

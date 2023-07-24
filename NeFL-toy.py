@@ -201,7 +201,7 @@ def main():
             p_select = args.ps[model_idx]
             p_select_weight = extract_submodel_weight_from_globalM(net = copy.deepcopy(net_glob), BN_layer=BN_layers, Step_layer=Steps, p=p_select, model_i=model_idx)
             # p_select_weight = extract_submodel_weight_from_global(net = copy.deepcopy(net_glob), BN_layer=BN_layers, p=p_select, model_i=model_idx)
-            local_models[model_idx].load_state_dict(p_select_weight)            
+            local_models[model_idx].load_state_dict(p_select_weight)
 
     net_glob.to(args.device)
     # torchsummary.summary(local_models[0], (3, 32, 32)) # device='cpu'

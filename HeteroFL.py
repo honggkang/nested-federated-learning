@@ -10,6 +10,8 @@ import random
 import torch
 import copy
 
+from torchvision.models import resnet18 as Presnet18
+from torchvision.models import ResNet18_Weights
 from torchvision import datasets, transforms
 import argparse
 import os
@@ -48,6 +50,7 @@ parser.add_argument('--model_name', type=str, default='resnet18') # wide_resnet1
 parser.add_argument('--device_id', type=str, default='3')
 
 parser.add_argument('--local_ep', type=int, default=5)
+parser.add_argument('--pretrained', type=bool, default=False)
 parser.add_argument('--wandb', type=bool, default=False)
 parser.add_argument('--name', type=str, default='[cifar10][HeteroFL][R56]')
 parser.add_argument('--num_models', type=int, default=5)
@@ -121,6 +124,18 @@ def main():
     
     if args.model_name == 'resnet18':
         net_glob = resnet18_HeteroFL(args.num_classes, 1)
+        # net_glob = resnet18wd(args.s2D[-1][0], 1, True, num_classes=args.num_classes)
+        w_glob = net_glob.state_dict()
+        if args.pretrained:
+            net_glob_temp = Presnet18(weights=ResNet18_Weights.IMAGENET1K_V1)
+        else:
+            net_glob_temp = Presnet18(weights=None)
+        net_glob_temp.fc = nn.Linear(512 * 1, 10)
+        net_glob_temp.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)        
+        w_glob_temp = net_glob_temp.state_dict()
+        for key in w_glob.keys():
+            w_glob[key] = w_glob_temp[key]
+        net_glob.load_state_dict(w_glob)
     elif args.model_name == 'resnet34':
         net_glob = resnet34_HeteroFL(args.num_classes, 1)
     elif args.model_name == 'resnet56':
@@ -133,8 +148,14 @@ def main():
     net_glob.to(args.device)
     # torchsummary.summary(local_models[0], (3, 32, 32))
     net_glob.train()
-
     w_glob = net_glob.state_dict()
+    
+    if args.pretrained:
+        for i in range(len(local_models)):
+            model_idx = i
+            p_select = args.ps[model_idx]
+            p_select_weight = extract_submodel_weight_from_globalH(net = copy.deepcopy(net_glob), p=p_select, model_i=model_idx)
+            local_models[model_idx].load_state_dict(p_select_weight)    
     
     com_layers = []  # common layers: conv1, bn1, linear
     sing_layers = []  # singular layers: layer1.0.~ 
@@ -277,7 +298,7 @@ def main():
         f = extract_submodel_weight_from_globalH(net = copy.deepcopy(net_glob), p=p, model_i=ind)
         model_e.load_state_dict(f, strict=False)
         model_e.to(args.device)
-        model_e = sBN(model_e, dataset_test, args) # static batch normalization
+        model_e = sBN(model_e, dataset_train, args) # static batch normalization
         model_e.eval()
         acc_test, loss_test = test_img(model_e, dataset_test, args)
         print("Testing accuracy " + str(ind) + ": {:.2f}".format(acc_test))

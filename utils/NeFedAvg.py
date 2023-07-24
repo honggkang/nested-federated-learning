@@ -161,7 +161,7 @@ def HeteroFL_Avg(w, args, commonLayers, singularLayers, bnLayers): # [0]: weight
         for i in range(1, len(w)):
             model_index = w[i][1]
             if model_index in active_model_idx:
-                index = active_model_idx.index(model_index) # it must be index = model_idx             
+                index = active_model_idx.index(model_index) # it must be index = model_idx
                 for j in range(index+1):
                     if len(shape) > 1:
                         li = up(shape[0]*list_ps[j]) # out
@@ -388,7 +388,7 @@ def NeFedAvg(w, BN_layers, Step_layers, args, commonLayers, singularLayers): # [
             break
         zero_idx += 1
     max_p_updated = args.ps[zero_idx] # define a maximum size of model that is updated
-    # print(max_p_updated)
+
     '''
       Initialization
       Non-updated params are not zero-ed and updated params are zero-ed.
@@ -484,7 +484,7 @@ def NeFedAvg(w, BN_layers, Step_layers, args, commonLayers, singularLayers): # [
         
         for i in range(args.num_models):
             # if args.s2D[args.num_models-1-i][0][X][Y]:
-            if args.s2D[i][0][X][Y]:
+            if args.s2D[i][0][X][Y]: # let's check here
                 list_ps.append(args.ps[i])
                 active_model_idx.append(i)
         '''
