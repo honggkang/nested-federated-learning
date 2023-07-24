@@ -54,7 +54,7 @@ parser.add_argument('--max_flex_num', type=int, default=0, help="0:~4 min(tc+arg
 parser.add_argument('--num_experiment', type=int, default=3, help="the number of experiments")
 parser.add_argument('--model_name', type=str, default='wide_resnet101_2') # wide_resnet101_2 resnet101 resnet18
 parser.add_argument('--device_id', type=str, default='1')
-parser.add_argument('--learnable_step', type=bool, default=True)
+parser.add_argument('--learnable_step', type=bool, default=False)
 parser.add_argument('--pretrained', type=bool, default=True)
 parser.add_argument('--wandb', type=bool, default=False)
 
@@ -286,12 +286,12 @@ def main():
     loss_train = []
 
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-    filename = './output/mafl/'+ timestamp + str(args.name) + str(args.rs)
+    filename = './output/nefl/'+ timestamp + str(args.name) + str(args.rs)
     if not os.path.exists(filename):
         os.makedirs(filename)
 
     if args.wandb:
-        run = wandb.init(dir=filename, project='PreNeFL-0712', name= str(args.name)+ str(args.rs), reinit=True, settings=wandb.Settings(code_dir="."))
+        run = wandb.init(dir=filename, project='PreNeFL-0724', name= str(args.name)+ str(args.rs), reinit=True, settings=wandb.Settings(code_dir="."))
         wandb.config.update(args)
     logger = get_logger(logpath=os.path.join(filename, 'logs'), filepath=os.path.abspath(__file__))
 

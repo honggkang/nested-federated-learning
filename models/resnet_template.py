@@ -191,7 +191,7 @@ class ResNet_WD224(nn.Module):
     Depth, width-varying ResNet w/ learnable step option
     '''
     def __init__(self, block, num_blocks, step_size_2d_list, p_drop, learnable_step=True, num_classes=10, width_per_group=64):
-        super(ResNet_WD, self).__init__()
+        super(ResNet_WD224, self).__init__()
         # self.base_width = width_per_group
         self.in_planes = up(64*p_drop)
         self.conv1 = nn.Conv2d(3, self.in_planes, kernel_size=7,
