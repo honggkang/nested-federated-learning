@@ -185,3 +185,48 @@ class ResNet_c_WD(nn.Module):
         probas = F.softmax(logits, dim=1)
         return logits, probas
 
+
+class ResNet_WD224(nn.Module): 
+    '''
+    Depth, width-varying ResNet w/ learnable step option
+    '''
+    def __init__(self, block, num_blocks, step_size_2d_list, p_drop, learnable_step=True, num_classes=10, width_per_group=64):
+        super(ResNet_WD, self).__init__()
+        # self.base_width = width_per_group
+        self.in_planes = up(64*p_drop)
+        self.conv1 = nn.Conv2d(3, self.in_planes, kernel_size=7,
+                               stride=2, padding=3, bias=False)
+        # self.conv1 = nn.Conv2d(3, self.in_planes, kernel_size=3,
+        #                        stride=1, padding=1, bias=False)
+        self.bn1 = nn.BatchNorm2d(self.in_planes)
+        self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
+        
+        self.layer1 = self._make_layer(block, up(64*p_drop), num_blocks[0], step_size_2d_list[0], learnable_step=learnable_step, stride=1, base_width=width_per_group)
+        self.layer2 = self._make_layer(block, up(128*p_drop), num_blocks[1], step_size_2d_list[1], learnable_step=learnable_step, stride=2, base_width=width_per_group)
+        self.layer3 = self._make_layer(block, up(256*p_drop), num_blocks[2], step_size_2d_list[2], learnable_step=learnable_step, stride=2, base_width=width_per_group)
+        self.layer4 = self._make_layer(block, up(512*p_drop), num_blocks[3], step_size_2d_list[3], learnable_step=learnable_step, stride=2, base_width=width_per_group)
+
+        # self.fc = nn.Linear(up(512*block.expansion*p_drop), num_classes)
+        self.fc = nn.Linear(self.in_planes, num_classes)
+
+    def _make_layer(self, block, planes, num_blocks, step_size_1d_list, learnable_step, stride, base_width):
+        strides = [stride] + [1]*(num_blocks-1)
+        layers = []
+        i = 0
+        for stride in strides:
+            layers.append(block(self.in_planes, planes, step_size_1d_list[i], learnable_step=learnable_step, stride=stride, base_width=base_width))
+            self.in_planes = planes * block.expansion
+            i += 1
+        return nn.Sequential(*layers)
+
+    def forward(self, x):
+        out = self.maxpool(F.relu(self.bn1(self.conv1(x))))
+        out = self.layer1(out)
+        out = self.layer2(out)
+        out = self.layer3(out)
+        out = self.layer4(out)
+        out = F.avg_pool2d(out, out.size()[3])
+        out = out.view(out.size(0), -1)
+        logits = self.fc(out)
+        probas = F.softmax(logits, dim=1)
+        return logits, probas

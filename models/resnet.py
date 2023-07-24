@@ -74,7 +74,7 @@ def resnet101wd(step_size_2d_list, p, learnable_step, num_classes):
 
 
 def resnet101_2wd(step_size_2d_list, p, learnable_step, num_classes):
-    model = ResNet_WD(BottleneckM,
+    model = ResNet_WD224(BottleneckM,
                    [3, 4, 23, 3], step_size_2d_list,
                    p_drop = p, learnable_step=learnable_step, num_classes=num_classes, width_per_group=128
                    )

@@ -154,9 +154,9 @@ class BasicBlockH(nn.Module):  # Basic Block for HeteroFL (BN is not tracked)
                                stride=1, padding=1, bias=False)
         self.bn2 = nn.BatchNorm2d(planes, momentum=None, track_running_stats=track)
 
-        self.shortcut = nn.Sequential()
+        self.downsample = nn.Sequential()
         if stride != 1 or in_planes != self.expansion*planes:
-            self.shortcut = nn.Sequential(
+            self.downsample = nn.Sequential(
                 nn.Conv2d(in_planes, self.expansion*planes,
                         kernel_size=1, stride=stride, bias=False),
                 nn.BatchNorm2d(self.expansion*planes, momentum=None, track_running_stats=track)
@@ -165,7 +165,7 @@ class BasicBlockH(nn.Module):  # Basic Block for HeteroFL (BN is not tracked)
     def forward(self, x):
         out = F.relu(self.bn1(self.conv1(x)))
         out = self.bn2(self.conv2(out))
-        out += self.shortcut(x)
+        out += self.downsample(x)
         out = F.relu(out)
         return out    
     
