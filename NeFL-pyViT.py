@@ -48,10 +48,10 @@ parser.add_argument('--num_experiment', type=int, default=2, help="the number of
 parser.add_argument('--model_name', type=str, default='vit_b_16')
 parser.add_argument('--device_id', type=str, default='3')
 parser.add_argument('--wandb', type=bool, default=True)
-parser.add_argument('--learnable_step', type=bool, default=True)
+parser.add_argument('--learnable_step', type=bool, default=False)
 parser.add_argument('--pretrained', type=bool, default=True)
 
-parser.add_argument('--name', type=str, default='[FjORD][vit_b_16][3M][iid]') # 
+parser.add_argument('--name', type=str, default='[FjORD][vit_b16][iid]') # 
 # parser.add_argument('--num_models', type=int, default=1)
 
 parser.add_argument('--warmup_steps', type=int, default=500)
@@ -104,37 +104,27 @@ else:
 
 
 def main():
-    # args.ps = [sqrt(0.2), sqrt(0.4), sqrt(0.6), sqrt(0.8), 1] # MAFL-W
-    # args.ps = [sqrt(1), sqrt(1), sqrt(1), sqrt(1), 1] # full model test (MAFL-D)
-    # args.s2D = [ # MAFL
-    #         [1,1,1,1,0,0,0,0,0,0,0,1] ,
-    #         [1,1,1,1,1,1,1,0,0,0,0,1] ,
-    #         [1,1,1,1,1,1,1,1,0,0,0,1] ,
-    #         [1,1,1,1,1,1,1,1,1,0,0,1] ,
-    #         [1,1,1,1,1,1,1,1,1,1,1,1] 
-    #     ]
-    args.ps = [sqrt(0.5), sqrt(0.75), 1] # MAFL-W
-    args.s2D = [
-            [1,1,1,1,1,1,1,1,1,1,1,1] ,
-            [1,1,1,1,1,1,1,1,1,1,1,1] ,
-            [1,1,1,1,1,1,1,1,1,1,1,1]
+    if args.method == 'W':
+        args.ps = [sqrt(0.5), sqrt(0.75), 1] # MAFL-W
+        args.s2D = [
+                [1,1,1,1,1,1,1,1,1,1,1,1] ,
+                [1,1,1,1,1,1,1,1,1,1,1,1] ,
+                [1,1,1,1,1,1,1,1,1,1,1,1]
+                ]
+    elif args.method == 'DD':
+        args.ps = [1, 1, 1]  # MAFL-ADO
+        args.s2D = [ # 50 75 100
+                [1,1,1,1,1,1,0,0,0,0,0,0],
+                [1,1,1,1,1,1,1,1,1,0,0,0],
+                [1,1,1,1,1,1,1,1,1,1,1,1]
             ]
-    # args.ps = [sqrt(0.8), 1]
-    # args.ps = [1, 1, 1, 1]  # MAFL-ADO
-    # args.s2D = [ # 25 50 75 100
-    #         [1,1,1,0,0,0,0,0,0,0,0,0],
-    #         [1,1,1,1,1,1,0,0,0,0,0,0],
-    #         [1,1,1,1,1,1,1,1,1,0,0,0],
-    #         [1,1,1,1,1,1,1,1,1,1,1,1]
-    #     ]
-    # args.ps = [1, 1, 1]  # MAFL-ADO
-    # args.s2D = [ # 50 75 100
-    #         [1,1,1,1,1,1,0,0,0,0,0,0],
-    #         [1,1,1,1,1,1,1,1,1,0,0,0],
-    #         [1,1,1,1,1,1,1,1,1,1,1,1]
-    #     ]
-    # args.ps = [1]
-    # args.s2D = [[1,1,1,1,1,1,1,1,1,1,1,1]]
+    elif args.method == 'WD':
+        args.ps = [sqrt(0.747389751896896), sqrt(0.898744459091891), 1]
+        args.s2D = [
+                [1,1,1,1,1,1,1,1,0,0,0,0] ,
+                [1,1,1,1,1,1,1,1,1,1,0,0] ,
+                [1,1,1,1,1,1,1,1,1,1,1,1]
+            ]
     args.num_models = len(args.ps)
     # torchsummary.summary(test_net, (3,224,224))
     # summary(test_net, torch.zeros(1,3,224,224))
