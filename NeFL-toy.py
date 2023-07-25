@@ -49,7 +49,7 @@ parser.add_argument('--max_flex_num', type=int, default=2, help="0:~4 min(tc+arg
 parser.add_argument('--num_experiment', type=int, default=3, help="the number of experiments")
 parser.add_argument('--model_name', type=str, default='resnet56') # wide_resnet101_2
 parser.add_argument('--device_id', type=str, default='0')
-parser.add_argument('--learnable_step', type=bool, default=True) # False: FjORD / HeteroFL / DepthFL
+parser.add_argument('--learnable_step', type=bool, default=False) # False: FjORD / HeteroFL / DepthFL
 parser.add_argument('--pretrained', type=bool, default=False)
 parser.add_argument('--wandb', type=bool, default=False)
 
@@ -234,7 +234,7 @@ def main():
 
     if args.wandb:
         # wandb.init(dir=filename, project='fjord_psel__', name='fjord' + args.mode)
-        run = wandb.init(dir=filename, project='NeFL-0716', name= str(args.name)+ str(args.rs), reinit=True, settings=wandb.Settings(code_dir="."))
+        run = wandb.init(dir=filename, project='NeFL-0725', name= str(args.name)+ str(args.rs), reinit=True, settings=wandb.Settings(code_dir="."))
         # wandb.run.name = str(stepSize2D) + timestamp
         wandb.config.update(args)
     logger = get_logger(logpath=os.path.join(filename, 'logs'), filepath=os.path.abspath(__file__))
