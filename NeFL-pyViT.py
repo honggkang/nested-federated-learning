@@ -47,9 +47,12 @@ parser.add_argument('--max_flex_num', type=int, default=0, help="0:~4 min(tc+arg
 parser.add_argument('--num_experiment', type=int, default=2, help="the number of experiments")
 parser.add_argument('--model_name', type=str, default='vit_b_16')
 parser.add_argument('--device_id', type=str, default='3')
-parser.add_argument('--wandb', type=bool, default=True)
 parser.add_argument('--learnable_step', type=bool, default=False)
 parser.add_argument('--pretrained', type=bool, default=True)
+parser.add_argument('--wandb', type=bool, default=True)
+
+parser.add_argument('--dataset', type=str, default='cifar10') # stl10, cifar10, svhn
+parser.add_argument('--method', type=str, default='DD') # DD, W, WD / fjord, depthfl
 
 parser.add_argument('--name', type=str, default='[FjORD][vit_b16][iid]') # 
 # parser.add_argument('--num_models', type=int, default=1)
@@ -266,12 +269,12 @@ def main():
     loss_train = []
 
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-    filename = './output/mafl/'+ timestamp + str(args.name) + str(args.rs)
+    filename = './output/nefl/'+ timestamp + str(args.name) + str(args.rs)
     if not os.path.exists(filename):
         os.makedirs(filename)
 
     if args.wandb:
-        run = wandb.init(dir=filename, project='MAFL_BiT0316', name= str(args.name)+ str(args.rs), reinit=True, settings=wandb.Settings(code_dir="."))
+        run = wandb.init(dir=filename, project='NeFL_ViT0725', name= str(args.name)+ str(args.rs), reinit=True, settings=wandb.Settings(code_dir="."))
         wandb.config.update(args)
     logger = get_logger(logpath=os.path.join(filename, 'logs'), filepath=os.path.abspath(__file__))
 
