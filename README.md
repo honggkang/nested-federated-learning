@@ -15,3 +15,13 @@ Somewhat interestingly, by investigating how to utilize pre-trained models withi
 
     python NeFL-toy.py --model_name resnet18 --device_id 0 --dataset cifar10 --learnable_step True --method WD # [W, DD, WD]
     python NeFL-pre-resnet.py --model_name wide_resnet101_2 --device_id 0 --learnable_step True --method W
+    # FjORD
+    python NeFL-toy.py --method W --dataset cifar10 --model_name resnetxx --device_id x --name x
+    # NeFL-W
+    python NeFL-toy.py --method W --dataset cifar10 --learnable_step True --model_name resnetxx --device_id x --name x
+    # NeFL-ADD
+    python NeFL-toy.py --method DD --dataset cifar10 --learnable_step True --model_name resnetxx --device_id x --name x
+    # NeFL-WD
+    python NeFL-toy.py --method WD --dataset cifar10 --learnable_step True --model_name resnetxx --device_id x --name x
+    # if pretrained
+    --pretrained True
