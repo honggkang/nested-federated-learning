@@ -8,7 +8,7 @@ import torch
 from torchvision.models import resnet18 as Presnet18
 from torchvision.models import ResNet18_Weights
 from torchvision.models import resnet34 as Presnet34
-
+from torchvision.models import ResNet34_Weights
 import numpy as np
 import random
 import torch
@@ -51,6 +51,7 @@ parser.add_argument('--model_name', type=str, default='resnet56')
 parser.add_argument('--device_id', type=str, default='2')
 
 parser.add_argument('--local_ep', type=int, default=5)
+parser.add_argument('--pretrained', type=bool, default=False)
 parser.add_argument('--wandb', type=bool, default=True)
 parser.add_argument('--name', type=str, default='[cifar10][DepthFL2][R56]')
 parser.add_argument('--num_models', type=int, default=5)
@@ -236,7 +237,7 @@ def main():
         os.makedirs(filename)
 
     if args.wandb:
-        run = wandb.init(dir=filename, project='DepthFL-0712', name= str(args.name)+ str(args.rs), reinit=True, settings=wandb.Settings(code_dir="."))
+        run = wandb.init(dir=filename, project='DepthFL-0726', name= str(args.name)+ str(args.rs), reinit=True, settings=wandb.Settings(code_dir="."))
         wandb.config.update(args)
     logger = get_logger(logpath=os.path.join(filename, 'logs'), filepath=os.path.abspath(__file__))
 
