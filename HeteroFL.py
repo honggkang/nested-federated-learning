@@ -12,6 +12,8 @@ import copy
 
 from torchvision.models import resnet18 as Presnet18
 from torchvision.models import ResNet18_Weights
+from torchvision.models import resnet34 as Presnet34
+from torchvision.models import ResNet34_Weights
 from torchvision import datasets, transforms
 import argparse
 import os
@@ -138,6 +140,17 @@ def main():
         net_glob.load_state_dict(w_glob)
     elif args.model_name == 'resnet34':
         net_glob = resnet34_HeteroFL(args.num_classes, 1)
+        w_glob = net_glob.state_dict()
+        if args.pretrained:
+            net_glob_temp = Presnet34(weights=ResNet34_Weights.IMAGENET1K_V1)
+        else:
+            net_glob_temp = Presnet34(weights=None)
+        net_glob_temp.fc = nn.Linear(512 * 1, 10)
+        net_glob_temp.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
+        w_glob_temp = net_glob_temp.state_dict()
+        for key in w_glob.keys():
+            w_glob[key] = w_glob_temp[key]
+        net_glob.load_state_dict(w_glob)        
     elif args.model_name == 'resnet56':
         net_glob = resnet56_HeteroFL(args.num_classes, 1)
     elif args.model_name == 'resnet110':
@@ -189,7 +202,7 @@ def main():
         os.makedirs(filename)
 
     if args.wandb:
-        run = wandb.init(dir=filename, project='HeteroFL-0712', name= str(args.name)+ str(args.rs), reinit=True, settings=wandb.Settings(code_dir="."))
+        run = wandb.init(dir=filename, project='HeteroFL-0726', name= str(args.name)+ str(args.rs), reinit=True, settings=wandb.Settings(code_dir="."))
         wandb.config.update(args)
     logger = get_logger(logpath=os.path.join(filename, 'logs'), filepath=os.path.abspath(__file__))
 

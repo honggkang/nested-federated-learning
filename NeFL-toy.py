@@ -48,13 +48,13 @@ parser.add_argument('--max_flex_num', type=int, default=2, help="0:~4 min(tc+arg
 
 parser.add_argument('--num_experiment', type=int, default=3, help="the number of experiments")
 parser.add_argument('--model_name', type=str, default='resnet56') # wide_resnet101_2
-parser.add_argument('--device_id', type=str, default='0')
+parser.add_argument('--device_id', type=str, default='3')
 parser.add_argument('--learnable_step', type=bool, default=False) # False: FjORD / HeteroFL / DepthFL
 parser.add_argument('--pretrained', type=bool, default=False)
 parser.add_argument('--wandb', type=bool, default=False)
 
 parser.add_argument('--dataset', type=str, default='cifar10') # stl10, cifar10, svhn
-parser.add_argument('--method', type=str, default='DD') # DD, W, WD / fjord, depthfl
+parser.add_argument('--method', type=str, default='W') # DD, W, WD / fjord
 
 parser.add_argument('--name', type=str, default='[cifar10][NeFLADD2][R56]') # L-A: bad character
    
