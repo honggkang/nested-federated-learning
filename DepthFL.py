@@ -167,31 +167,26 @@ def main():
     '''
     if args.model_name == 'resnet18':
         net_glob = resnet18DFs(args.s2D[-1][0], args.num_classes)
-        # net_glob = resnet18wd(args.s2D[-1][0], 1, True, num_classes=args.num_classes)
-        w_glob = net_glob.state_dict()
         if args.pretrained:
             net_glob_temp = Presnet18(weights=ResNet18_Weights.IMAGENET1K_V1)
-        else:
-            net_glob_temp = Presnet18(weights=None)
-        net_glob_temp.fc = nn.Linear(512 * 1, 10)
-        net_glob_temp.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)        
-        w_glob_temp = net_glob_temp.state_dict()
-        for key in w_glob.keys():
-            w_glob[key] = w_glob_temp[key]
-        net_glob.load_state_dict(w_glob)
+            w_glob = net_glob.state_dict()
+            net_glob_temp.fc = nn.Linear(512 * 1, 10)
+            net_glob_temp.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)        
+            w_glob_temp = net_glob_temp.state_dict()
+            for key in w_glob.keys():
+                w_glob[key] = w_glob_temp[key]
+            net_glob.load_state_dict(w_glob)
     elif args.model_name == 'resnet34':
         net_glob = resnet34DFs(args.s2D[-1][0], args.num_classes)
-        w_glob = net_glob.state_dict()
         if args.pretrained:
             net_glob_temp = Presnet34(weights=ResNet34_Weights.IMAGENET1K_V1)
-        else:
-            net_glob_temp = Presnet34(weights=None)
-        net_glob_temp.fc = nn.Linear(512 * 1, 10)
-        net_glob_temp.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
-        w_glob_temp = net_glob_temp.state_dict()
-        for key in w_glob.keys():
-            w_glob[key] = w_glob_temp[key]
-        net_glob.load_state_dict(w_glob)
+            w_glob = net_glob.state_dict()
+            net_glob_temp.fc = nn.Linear(512 * 1, 10)
+            net_glob_temp.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
+            w_glob_temp = net_glob_temp.state_dict()
+            for key in w_glob.keys():
+                w_glob[key] = w_glob_temp[key]
+            net_glob.load_state_dict(w_glob)
     elif args.model_name == 'resnet56':
         net_glob = resnet56DFs(args.s2D[-1][0], args.num_classes)
     elif args.model_name == 'resnet110':

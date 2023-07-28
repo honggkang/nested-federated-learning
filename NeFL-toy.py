@@ -136,72 +136,61 @@ def main():
 
     if args.model_name == 'resnet18':
         net_glob = resnet18wd(args.s2D[-1][0], 1, True, num_classes=args.num_classes)
-        w_glob = net_glob.state_dict()
         if args.pretrained:
+            w_glob = net_glob.state_dict()
             net_glob_temp = Presnet18(weights=ResNet18_Weights.IMAGENET1K_V1)
-        else:
-            net_glob_temp = Presnet18(weights=None)
-        net_glob_temp.fc = nn.Linear(512 * 1, 10)
-        net_glob_temp.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
-        
-        w_glob_temp = net_glob_temp.state_dict()
-        for key in w_glob_temp.keys():
-            w_glob[key] = w_glob_temp[key]
-        net_glob.load_state_dict(w_glob) 
+            net_glob_temp.fc = nn.Linear(512 * 1, 10)
+            net_glob_temp.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
+            
+            w_glob_temp = net_glob_temp.state_dict()
+            for key in w_glob_temp.keys():
+                w_glob[key] = w_glob_temp[key]
+            net_glob.load_state_dict(w_glob) 
     elif args.model_name== 'resnet34':
         net_glob = resnet34wd(args.s2D[-1][0], 1, True, num_classes=args.num_classes)
-        w_glob = net_glob.state_dict()
         if args.pretrained:
+            w_glob = net_glob.state_dict()
             net_glob_temp = Presnet34(weights=ResNet34_Weights.IMAGENET1K_V1)
-        else:
-            net_glob_temp = Presnet34(weights=None)
-        net_glob_temp.fc = nn.Linear(512 * 1, 10)
-        net_glob_temp.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
-        
-        w_glob_temp = net_glob_temp.state_dict()
-        for key in w_glob_temp.keys():
-            w_glob[key] = w_glob_temp[key]
-        net_glob.load_state_dict(w_glob)
+            net_glob_temp.fc = nn.Linear(512 * 1, 10)
+            net_glob_temp.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
+            
+            w_glob_temp = net_glob_temp.state_dict()
+            for key in w_glob_temp.keys():
+                w_glob[key] = w_glob_temp[key]
+            net_glob.load_state_dict(w_glob)
     elif args.model_name== 'resnet101':
         net_glob = resnet101wd(args.s2D[-1][0], 1, True, num_classes=args.num_classes)
-        w_glob = net_glob.state_dict()
         if args.pretrained:
+            w_glob = net_glob.state_dict()
             net_glob_temp = Presnet101(weights=ResNet101_Weights.IMAGENET1K_V2) ########
-        else:
-            net_glob_temp = Presnet101(weights=None)
-        net_glob_temp.fc = nn.Linear(512 * 4, 10)
-        w_glob_temp = net_glob_temp.state_dict()
-        for key in w_glob_temp.keys():
-            w_glob[key] = w_glob_temp[key]
-        net_glob.load_state_dict(w_glob)        
+            net_glob_temp.fc = nn.Linear(512 * 4, 10)
+
+            w_glob_temp = net_glob_temp.state_dict()
+            for key in w_glob_temp.keys():
+                w_glob[key] = w_glob_temp[key]
+            net_glob.load_state_dict(w_glob)        
     elif args.model_name == 'resnet56':
-        # net_glob = resnet56Mp(args.s2D[-1][0], num_classes=10)
         net_glob = resnet56wd(args.s2D[-1][0], 1, True, num_classes=args.num_classes)
-        # net_glob = resnet56_DW7(args.s2D[-1][0], 1, True, num_classes=10)
     elif args.model_name == 'resnet110':
         net_glob = resnet110wd(args.s2D[-1][0], 1, True, num_classes=args.num_classes)
     elif args.model_name == 'wide_resnet101_2':
         net_glob = resnet101_2wd(args.s2D[-1][0], 1, True, num_classes=args.num_classes)
-        w_glob = net_glob.state_dict()
         if args.pretrained:
             net_glob_temp = Pwide_resnet101_2(weights=Wide_ResNet101_2_Weights.IMAGENET1K_V1)
-        else:
-            net_glob_temp = Pwide_resnet101_2(weights=None)
-
-        net_glob_temp.fc = nn.Linear(2048, args.num_classes)
-        w_glob_temp = net_glob_temp.state_dict()
-        for key in w_glob_temp.keys():
-            w_glob[key] = w_glob_temp[key]
-        net_glob.load_state_dict(w_glob)
+            w_glob = net_glob.state_dict()
+            net_glob_temp.fc = nn.Linear(2048, args.num_classes)
+            w_glob_temp = net_glob_temp.state_dict()
+            for key in w_glob_temp.keys():
+                w_glob[key] = w_glob_temp[key]
+            net_glob.load_state_dict(w_glob)
     # torchsummary.summary(net_glob_temp, (3, 32, 32), device='cpu')
 
-    if args.pretrained:
-        for i in range(len(local_models)):
-            model_idx = i
-            p_select = args.ps[model_idx]
-            p_select_weight = extract_submodel_weight_from_globalM(net = copy.deepcopy(net_glob), BN_layer=BN_layers, Step_layer=Steps, p=p_select, model_i=model_idx)
-            # p_select_weight = extract_submodel_weight_from_global(net = copy.deepcopy(net_glob), BN_layer=BN_layers, p=p_select, model_i=model_idx)
-            local_models[model_idx].load_state_dict(p_select_weight)
+    # if args.pretrained:
+    #     for i in range(len(local_models)):
+    #         model_idx = i
+    #         p_select = args.ps[model_idx]
+    #         p_select_weight = extract_submodel_weight_from_globalM(net = copy.deepcopy(net_glob), BN_layer=BN_layers, Step_layer=Steps, p=p_select, model_i=model_idx)
+    #         local_models[model_idx].load_state_dict(p_select_weight)
 
     net_glob.to(args.device)
     # torchsummary.summary(local_models[0], (3, 32, 32)) # device='cpu'
