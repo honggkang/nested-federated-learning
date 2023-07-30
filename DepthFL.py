@@ -232,7 +232,7 @@ def main():
         os.makedirs(filename)
 
     if args.wandb:
-        run = wandb.init(dir=filename, project='DepthFL-0726', name= str(args.name)+ str(args.rs), reinit=True, settings=wandb.Settings(code_dir="."))
+        run = wandb.init(dir=filename, project='DepthFL-0728', name= str(args.name)+ str(args.rs), reinit=True, settings=wandb.Settings(code_dir="."))
         wandb.config.update(args)
     logger = get_logger(logpath=os.path.join(filename, 'logs'), filepath=os.path.abspath(__file__))
 
