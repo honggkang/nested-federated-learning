@@ -223,7 +223,7 @@ def main():
 
     if args.wandb:
         # wandb.init(dir=filename, project='fjord_psel__', name='fjord' + args.mode)
-        run = wandb.init(dir=filename, project='NeFL-0729', name= str(args.name)+ str(args.rs), reinit=True, settings=wandb.Settings(code_dir="."))
+        run = wandb.init(dir=filename, project='NeFL-0801', name= str(args.name)+ str(args.rs), reinit=True, settings=wandb.Settings(code_dir="."))
         # wandb.run.name = str(stepSize2D) + timestamp
         wandb.config.update(args)
     logger = get_logger(logpath=os.path.join(filename, 'logs'), filepath=os.path.abspath(__file__))
