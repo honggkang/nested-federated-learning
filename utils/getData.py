@@ -188,7 +188,7 @@ def getDataset(args):
         ])
         dataset_train = datasets.CIFAR100('/home/hong/NeFL/.data/cifar', train=True, download=True, transform=transform_train)
         dataset_test = datasets.CIFAR100('/home/hong/NeFL/.data/cifar', train=False, download=True, transform=transform_test)
-    elif args.dataset == 'cinic10':
+    elif args.dataset == 'cinic':
         cinic_mean = [0.47889522, 0.47227842, 0.43047404]
         cinic_std = [0.24205776, 0.23828046, 0.25874835]
         ddir = '/home/hong/tbu/NeFL/.data/cinic'
