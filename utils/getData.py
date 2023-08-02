@@ -172,7 +172,22 @@ def getDataset(args):
         ])
         dataset_train = datasets.CIFAR10('/home/hong/NeFL/.data/cifar', train=True, download=True, transform=transform_train)
         dataset_test = datasets.CIFAR10('/home/hong/NeFL/.data/cifar', train=False, download=True, transform=transform_test)
+    elif args.dataset =='cifar100':
+        ## CIFAR
+        args.num_classes = 100
+        transform_train = transforms.Compose([
+            transforms.RandomCrop(32, padding=4), # transforms.Resize(256), transforms.RandomCrop(224),
+            transforms.RandomHorizontalFlip(),
+            transforms.ToTensor(),
+            transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+        ])
 
+        transform_test = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+        ])
+        dataset_train = datasets.CIFAR100('/home/hong/NeFL/.data/cifar', train=True, download=True, transform=transform_train)
+        dataset_test = datasets.CIFAR100('/home/hong/NeFL/.data/cifar', train=False, download=True, transform=transform_test)
     elif args.dataset == 'svhn':
         ### SVHN
         transform_train = transforms.Compose([
@@ -357,7 +372,7 @@ def get_submodel_info(args):
                         [ [[1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]] ],  # 0.36769
                         [ [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0]] ],  # 0.64889
                         [ [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]] ]
-                ]            
+                ]
     elif args.model_name == 'resnet18':
         if args.method == 'DD':
             ps = [1, 1, 1, 1, 1] # NEFL ADD

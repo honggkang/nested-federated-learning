@@ -39,7 +39,7 @@ parser.add_argument('--num_classes', type=int, default=10)
 parser.add_argument('--lr', type=float, default=3e-2)
 parser.add_argument('--weight_decay', type=float, default=0)
 parser.add_argument('--mode', type=str, default='normal')
-parser.add_argument('--rs', type=int, default=2)
+parser.add_argument('--rs', type=int, default=0)
 
 parser.add_argument('--min_flex_num', type=int, default=0, help="0:0~ max(0,tc-args.min_flex_num)")
 parser.add_argument('--max_flex_num', type=int, default=0, help="0:~4 min(tc+args.max_flex_num+1,5)")
