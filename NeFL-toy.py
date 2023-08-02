@@ -53,7 +53,7 @@ parser.add_argument('--learnable_step', type=bool, default=False) # False: FjORD
 parser.add_argument('--pretrained', type=bool, default=False)
 parser.add_argument('--wandb', type=bool, default=False)
 
-parser.add_argument('--dataset', type=str, default='cifar10') # stl10, cifar10, svhn
+parser.add_argument('--dataset', type=str, default='cifar10') # stl10, cifar10, svhn, cinic
 parser.add_argument('--method', type=str, default='W') # DD, W, WD / fjord
 
 parser.add_argument('--name', type=str, default='[cifar10][NeFLADD2][R56]') # L-A: bad character

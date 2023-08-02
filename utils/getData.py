@@ -188,6 +188,25 @@ def getDataset(args):
         ])
         dataset_train = datasets.CIFAR100('/home/hong/NeFL/.data/cifar', train=True, download=True, transform=transform_train)
         dataset_test = datasets.CIFAR100('/home/hong/NeFL/.data/cifar', train=False, download=True, transform=transform_test)
+    elif args.dataset == 'cinic10':
+        cinic_mean = [0.47889522, 0.47227842, 0.43047404]
+        cinic_std = [0.24205776, 0.23828046, 0.25874835]
+        ddir = '/home/hong/tbu/NeFL/.data/cinic'
+        traindir = os.path.join(ddir, 'train')
+        testdir = os.path.join(ddir, 'test')
+        train_transform = transforms.Compose([
+            transforms.RandomCrop(32, padding=4),
+            transforms.RandomHorizontalFlip(),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=cinic_mean, std=cinic_std)
+        ])
+        test_transform = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize(mean=cinic_mean, std=cinic_std)
+        ])
+        dataset_train = datasets.ImageFolder(root=traindir, transform=train_transform)
+        dataset_test = datasets.ImageFolder(root=testdir, transform=test_transform)
+                
     elif args.dataset == 'svhn':
         ### SVHN
         transform_train = transforms.Compose([
