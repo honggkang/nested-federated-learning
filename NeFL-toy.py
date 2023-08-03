@@ -246,10 +246,10 @@ def main():
         niid_name = '[iid]'
         
     if args.pretrained:
-        args.model_name = 'P' + args.model_name
+        model_name = 'P' + args.model_name
 
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-    args.name = '[' + str(args.dataset) + ']' + '[' + args.model_name + ']' + method_name + niid_name
+    args.name = '[' + str(args.dataset) + ']' + '[' + model_name + ']' + method_name + niid_name
     filename = './output/nefl/'+ timestamp + str(args.name) + str(args.rs)
     if not os.path.exists(filename):
         os.makedirs(filename)
