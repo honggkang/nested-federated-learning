@@ -30,6 +30,8 @@ from utils.NeFedAvg import DepthFL_Avg
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--num_users', type=int, default=100)
+parser.add_argument('--noniid', type=str, default='noniiddir') # noniid, noniiddir
+
 parser.add_argument('--frac', type=float, default=0.1)
 parser.add_argument('--bs', type=int, default=32)
 parser.add_argument('--epochs', type=int, default=500)
@@ -129,7 +131,12 @@ len(shape) = 0: bn1.num_batches_tracked
 
 dataset_train, dataset_test = getDataset(args)
 
-dict_users = cifar_iid(dataset_train, args.num_users, args.rs)
+if args.noniid == 'noniid':
+    dict_users = cifar_noniid(args, dataset_train)
+elif args.noniid == 'noniiddir':
+    dict_users = cifar_noniiddir(args, 1, dataset_train)
+else:
+    dict_users = cifar_iid(dataset_train, args.num_users, args.rs)
 # img_size = dataset_train[0][0].shape
 
 
@@ -234,12 +241,19 @@ def main():
     loss_train = []
 
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-    filename = './output/depthfl/'+ timestamp + str(args.name) + str(args.rs)
+    if args.noniid == 'noniid': # noniid, noniiddir
+        niid_name = 'niid'
+    elif args.noniid == 'noniiddir':
+        niid_name = 'dir'
+    else:
+        niid_name = 'iid'
+            
+    filename = './output/depthfl/'+ timestamp + str(args.name) + niid_name + str(args.rs)
     if not os.path.exists(filename):
         os.makedirs(filename)
 
     if args.wandb:
-        run = wandb.init(dir=filename, project='DepthFL-0728', name= str(args.name)+ str(args.rs), reinit=True, settings=wandb.Settings(code_dir="."))
+        run = wandb.init(dir=filename, project='DepthFL-0803', name= str(args.name)+ niid_name + str(args.rs), reinit=True, settings=wandb.Settings(code_dir="."))
         wandb.config.update(args)
     logger = get_logger(logpath=os.path.join(filename, 'logs'), filepath=os.path.abspath(__file__))
 

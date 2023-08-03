@@ -241,7 +241,9 @@ def main():
     if args.noniid == 'noniid': # noniid, noniiddir
         niid_name = 'niid'
     elif args.noniid == 'noniiddir':
-        niid_name = 'Dir'
+        niid_name = 'dir'
+    else:
+        niid_name = 'iid'
         
     if args.pretrained:
         args.model_name = 'P' + args.model_name
