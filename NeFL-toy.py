@@ -43,6 +43,7 @@ parser.add_argument('--weight_decay', type=float, default=0)
 parser.add_argument('--mode', type=str, default='normal') # normal worst
 parser.add_argument('--rs', type=int, default=0)
 
+parser.add_argument('--model_num', type=int, default=5)
 parser.add_argument('--min_flex_num', type=int, default=2, help="0:0~ max(0,tc-args.min_flex_num)")
 parser.add_argument('--max_flex_num', type=int, default=2, help="0:~4 min(tc+args.max_flex_num+1,5)")
 
