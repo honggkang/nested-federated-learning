@@ -86,7 +86,7 @@ dataset_train, dataset_test = getDataset(args)
 if args.noniid == 'noniid':
     dict_users = cifar_noniid(args, dataset_train)
 elif args.noniid == 'noniiddir':
-    dict_users = cifar_noniiddir(args, 1, dataset_train)
+    dict_users = cifar_noniiddir(args, 0.5, dataset_train)
 else:
     dict_users = cifar_iid(dataset_train, args.num_users, args.rs)
 # img_size = dataset_train[0][0].shape
