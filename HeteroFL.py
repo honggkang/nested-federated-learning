@@ -31,6 +31,8 @@ from utils.NeFedAvg import HeteroFL_Avg
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--num_users', type=int, default=100)
+parser.add_argument('--noniid', type=str, default='noniiddir') # noniid, noniiddir
+
 parser.add_argument('--frac', type=float, default=0.1)
 parser.add_argument('--bs', type=int, default=32)
 parser.add_argument('--epochs', type=int, default=500)
@@ -54,7 +56,7 @@ parser.add_argument('--device_id', type=str, default='3')
 parser.add_argument('--local_ep', type=int, default=5)
 parser.add_argument('--pretrained', type=bool, default=False)
 parser.add_argument('--wandb', type=bool, default=False)
-parser.add_argument('--name', type=str, default='[cifar10][HeteroFL][R56]')
+
 parser.add_argument('--num_models', type=int, default=5)
 
 parser.add_argument('--dataset', type=str, default='cifar10') # stl10, cifar10, svhn
@@ -194,12 +196,22 @@ def main():
     loss_train = []
 
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    if args.noniid == 'noniid': # noniid, noniiddir
+        niid_name = '[niid]'
+    elif args.noniid == 'noniiddir':
+        niid_name = '[dir]'
+    else:
+        niid_name = '[iid]'
+        
+    if args.pretrained:
+        args.model_name = 'P' + args.model_name
+    args.name = '[' + str(args.dataset) + ']' + '[' + args.model_name + ']' + 'HeteroFL' + niid_name    
     filename = './output/heterofl/'+ timestamp + str(args.name) + str(args.rs)
     if not os.path.exists(filename):
         os.makedirs(filename)
 
     if args.wandb:
-        run = wandb.init(dir=filename, project='HeteroFL-0726', name= str(args.name)+ str(args.rs), reinit=True, settings=wandb.Settings(code_dir="."))
+        run = wandb.init(dir=filename, project='HeteroFL-0803', name= str(args.name)+ str(args.rs), reinit=True, settings=wandb.Settings(code_dir="."))
         wandb.config.update(args)
     logger = get_logger(logpath=os.path.join(filename, 'logs'), filepath=os.path.abspath(__file__))
 
