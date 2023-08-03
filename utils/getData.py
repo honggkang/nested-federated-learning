@@ -1,7 +1,7 @@
 import numpy as np
 from torchvision import datasets, transforms
 from math import sqrt
-
+import random
 # import lasagne
 import pickle
 import os
@@ -59,13 +59,59 @@ def cifar_iid(dataset, num_users, seed):
     :return: dict of image index
     """
     np.random.seed(seed)
-    
+    random.seed(seed)
+
     num_items = int(len(dataset)/num_users)
     dict_users, all_idxs = {}, [i for i in range(len(dataset))]
     for i in range(num_users):
         dict_users[i] = set(np.random.choice(all_idxs, num_items, replace=False))
         all_idxs = list(set(all_idxs) - dict_users[i])
     return dict_users
+
+def cifar_noniiddir(args, beta, dataset):
+    '''
+    Dirichlet distribution
+    smaller beta > 0 parition is more unbalanced
+    '''
+
+    np.random.seed(args.rs)
+    random.seed(args.rs)
+    min_size = 0
+    min_require_size = 10
+    
+    N = 50000
+    net_dataidx_map = {}
+    labels = np.array(dataset.targets)
+
+    while min_size < min_require_size:
+        idx_batch = [[] for _ in range(args.num_users)]
+        for k in range(args.num_classes):
+            idx_k = np.where(labels == k)[0]
+            np.random.shuffle(idx_k)
+            proportions = np.random.dirichlet(np.repeat(beta, args.num_users))
+            # logger.info("proportions1: ", proportions)
+            # logger.info("sum pro1:", np.sum(proportions))
+            ## Balance
+            proportions = np.array([p * (len(idx_j) < N / args.num_users) for p, idx_j in zip(proportions, idx_batch)])
+            # logger.info("proportions2: ", proportions)
+            proportions = proportions / proportions.sum()
+            # logger.info("proportions3: ", proportions)
+            proportions = (np.cumsum(proportions) * len(idx_k)).astype(int)[:-1]
+            # logger.info("proportions4: ", proportions)
+            idx_batch = [idx_j + idx.tolist() for idx_j, idx in zip(idx_batch, np.split(idx_k, proportions))]
+            min_size = min([len(idx_j) for idx_j in idx_batch])
+            # if K == 2 and n_parties <= 10:
+            #     if np.min(proportions) < 200:
+            #         min_size = 0
+            #         break
+
+
+    for j in range(args.num_users):
+        np.random.shuffle(idx_batch[j])
+        net_dataidx_map[j] = idx_batch[j]
+    
+    return net_dataidx_map
+
 
 def cifar_noniid(args, dataset):
     """
@@ -75,6 +121,7 @@ def cifar_noniid(args, dataset):
     :return:
     """
     np.random.seed(args.rs)
+    random.seed(args.rs)
 
     num_shards, num_imgs = args.num_users * args.class_per_each_client, int(50000/args.num_users/args.class_per_each_client)
     # {0: 5000, 1: 5000, 2: 5000, 3: 5000, 4: 5000, 5: 5000, 6: 5000, 7: 5000, 8: 5000, 9: 5000}

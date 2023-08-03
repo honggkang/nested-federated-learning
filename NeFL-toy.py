@@ -28,7 +28,7 @@ from utils.NeFedAvg import NeFedAvg
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--num_users', type=int, default=100)
-parser.add_argument('--noniid', action='store_true') # default: false2
+parser.add_argument('--noniid', type=str, default='noniiddir') # noniid, noniiddir
 parser.add_argument('--class_per_each_client', type=int, default=10)
 
 parser.add_argument('--frac', type=float, default=0.1)
@@ -56,8 +56,7 @@ parser.add_argument('--wandb', type=bool, default=False)
 parser.add_argument('--dataset', type=str, default='cifar10') # stl10, cifar10, svhn, cinic
 parser.add_argument('--method', type=str, default='W') # DD, W, WD / fjord
 
-parser.add_argument('--name', type=str, default='[cifar10][NeFLADD2][R56]') # L-A: bad character
-   
+# parser.add_argument('--name', type=str, default='[cifar10][NeFLADD2][R56]') # L-A: bad character
 args = parser.parse_args()
 args.device = 'cuda:' + args.device_id
 # args.ps = [sqrt(0.2), sqrt(0.4), sqrt(0.6), sqrt(0.8), 1] # only width -> param. size [0.2, 0.4, 0.6, 0.8, 1]
@@ -81,8 +80,10 @@ len(shape) = 0: bn1.num_batches_tracked
 
 dataset_train, dataset_test = getDataset(args)
 
-if args.noniid:
+if args.noniid == 'noniid':
     dict_users = cifar_noniid(args, dataset_train)
+elif args.noniid == 'noniiddir':
+    dict_users = cifar_noniiddir(args, 1, dataset_train)
 else:
     dict_users = cifar_iid(dataset_train, args.num_users, args.rs)
 # img_size = dataset_train[0][0].shape
@@ -213,10 +214,35 @@ def main():
             step_keys.append(i)
         else:
             bn_keys.append(i)
-            
+
     loss_train = []
 
+    if args.method == 'W':
+        if args.learnable_step:
+            method_name = 'NeFLW'
+        else:
+            method_name = 'FjORD'
+    elif args.method == 'DD':
+        if args.learnable_step:
+            method_name = 'NeFLADD'
+        else:
+            method_name = 'NeFLDD'
+    elif args.method == 'OD':
+        if args.learnable_step:
+            method_name = 'NeFLAOD'
+        else:
+            method_name = 'NeFLOD'
+    elif args.method == 'WD':
+        if args.learnable_step:
+            method_name = 'NeFLWD'
+        else:
+            method_name = 'NeFWDnL'
+    
+    if args.pretrained:
+        args.model_name = 'P' + args.model_name
+
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    args.name = '[' + str(args.dataset) + ']' + '[' + args.model_name + ']' + method_name
     filename = './output/nefl/'+ timestamp + str(args.name) + str(args.rs)
     if not os.path.exists(filename):
         os.makedirs(filename)
@@ -300,6 +326,7 @@ def main():
     filename = '/home/hong/NeFL/output/nefl/'+ timestamp + str(args.name) + str(args.rs) + '/models'
     if not os.path.exists(filename):
         os.makedirs(filename)
+
     for ind in range(ti):
         p = args.ps[ind]
         model_e = copy.deepcopy(local_models[ind])       
