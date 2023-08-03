@@ -83,7 +83,12 @@ len(shape) = 0: bn1.num_batches_tracked
 '''
 
 dataset_train, dataset_test = getDataset(args)
-dict_users = cifar_iid(dataset_train, args.num_users, args.rs)
+if args.noniid == 'noniid':
+    dict_users = cifar_noniid(args, dataset_train)
+elif args.noniid == 'noniiddir':
+    dict_users = cifar_noniiddir(args, 1, dataset_train)
+else:
+    dict_users = cifar_iid(dataset_train, args.num_users, args.rs)
 # img_size = dataset_train[0][0].shape
 
 
