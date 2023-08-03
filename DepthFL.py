@@ -242,13 +242,16 @@ def main():
 
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
     if args.noniid == 'noniid': # noniid, noniiddir
-        niid_name = 'niid'
+        niid_name = '[niid]'
     elif args.noniid == 'noniiddir':
-        niid_name = 'dir'
+        niid_name = '[dir]'
     else:
-        niid_name = 'iid'
-            
-    filename = './output/depthfl/'+ timestamp + str(args.name) + niid_name + str(args.rs)
+        niid_name = '[iid]'
+        
+    if args.pretrained:
+        args.model_name = 'P' + args.model_name
+    args.name = '[' + str(args.dataset) + ']' + '[' + args.model_name + ']' + 'DepthFL' + niid_name            
+    filename = './output/depthfl/'+ timestamp + args.name + str(args.rs)
     if not os.path.exists(filename):
         os.makedirs(filename)
 

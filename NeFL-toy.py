@@ -83,7 +83,7 @@ dataset_train, dataset_test = getDataset(args)
 if args.noniid == 'noniid':
     dict_users = cifar_noniid(args, dataset_train)
 elif args.noniid == 'noniiddir':
-    dict_users = cifar_noniiddir(args, 1, dataset_train)
+    dict_users = cifar_noniiddir(args, 0.5, dataset_train)
 else:
     dict_users = cifar_iid(dataset_train, args.num_users, args.rs)
 # img_size = dataset_train[0][0].shape
@@ -239,11 +239,11 @@ def main():
             method_name = 'NeFWDnL'
     
     if args.noniid == 'noniid': # noniid, noniiddir
-        niid_name = 'niid'
+        niid_name = '[niid]'
     elif args.noniid == 'noniiddir':
-        niid_name = 'dir'
+        niid_name = '[dir]'
     else:
-        niid_name = 'iid'
+        niid_name = '[iid]'
         
     if args.pretrained:
         args.model_name = 'P' + args.model_name
