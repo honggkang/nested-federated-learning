@@ -249,8 +249,9 @@ def main():
         niid_name = '[iid]'
         
     if args.pretrained:
-        args.model_name = 'P' + args.model_name
-    args.name = '[' + str(args.dataset) + ']' + '[' + args.model_name + ']' + 'DepthFL' + niid_name
+        model_name = 'P' + args.model_name
+        
+    args.name = '[' + str(args.dataset) + ']' + '[' + model_name + ']' + 'DepthFL' + niid_name
     filename = './output/depthfl/'+ timestamp + args.name + str(args.rs)
     
     if not os.path.exists(filename):
