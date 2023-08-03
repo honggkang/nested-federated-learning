@@ -250,7 +250,9 @@ def main():
         
     if args.pretrained:
         model_name = 'P' + args.model_name
-        
+    else:
+        model_name = args.model_name
+                
     args.name = '[' + str(args.dataset) + ']' + '[' + model_name + ']' + 'DepthFL' + niid_name
     filename = './output/depthfl/'+ timestamp + args.name + str(args.rs)
     

@@ -210,6 +210,9 @@ def main():
         
     if args.pretrained:
         model_name = 'P' + args.model_name
+    else:
+        model_name = args.model_name
+                
     args.name = '[' + str(args.dataset) + ']' + '[' + model_name + ']' + 'HeteroFL' + niid_name    
     filename = './output/heterofl/'+ timestamp + str(args.name) + str(args.rs)
     if not os.path.exists(filename):

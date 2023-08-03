@@ -247,6 +247,8 @@ def main():
         
     if args.pretrained:
         model_name = 'P' + args.model_name
+    else:
+        model_name = args.model_name
 
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
     args.name = '[' + str(args.dataset) + ']' + '[' + model_name + ']' + method_name + niid_name
