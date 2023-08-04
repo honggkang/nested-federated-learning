@@ -55,7 +55,6 @@ parser.add_argument('--device_id', type=str, default='2')
 parser.add_argument('--local_ep', type=int, default=5)
 parser.add_argument('--pretrained', type=bool, default=False)
 parser.add_argument('--wandb', type=bool, default=True)
-parser.add_argument('--name', type=str, default='[cifar10][DepthFL2][R56]')
 parser.add_argument('--num_models', type=int, default=5)
 
 parser.add_argument('--dataset', type=str, default='cifar10') # stl10, cifar10, svhn
