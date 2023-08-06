@@ -28,7 +28,7 @@ from utils.NeFedAvg import NeFedAvg
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--num_users', type=int, default=100)
-parser.add_argument('--noniid', type=str, default='iid') # iid, noniid, noniiddir
+parser.add_argument('--noniid', type=str, default='noniiddir') # iid, noniid, noniiddir
 parser.add_argument('--class_per_each_client', type=int, default=10)
 
 parser.add_argument('--frac', type=float, default=0.1)

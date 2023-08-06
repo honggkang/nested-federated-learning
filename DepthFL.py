@@ -30,7 +30,7 @@ from utils.NeFedAvg import DepthFL_Avg
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--num_users', type=int, default=100)
-parser.add_argument('--noniid', type=str, default='iid') # noniid, noniiddir
+parser.add_argument('--noniid', type=str, default='noniiddir') # iid, noniid, noniiddir
 
 parser.add_argument('--frac', type=float, default=0.1)
 parser.add_argument('--bs', type=int, default=32)
