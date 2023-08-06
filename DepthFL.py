@@ -30,7 +30,7 @@ from utils.NeFedAvg import DepthFL_Avg
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--num_users', type=int, default=100)
-parser.add_argument('--noniid', type=str, default='noniiddir') # noniid, noniiddir
+parser.add_argument('--noniid', type=str, default='iid') # noniid, noniiddir
 
 parser.add_argument('--frac', type=float, default=0.1)
 parser.add_argument('--bs', type=int, default=32)
@@ -259,7 +259,7 @@ def main():
         os.makedirs(filename)
 
     if args.wandb:
-        run = wandb.init(dir=filename, project='DepthFL-0804', name= str(args.name) + str(args.rs), reinit=True, settings=wandb.Settings(code_dir="."))
+        run = wandb.init(dir=filename, project='DepthFL-0806', name= str(args.name) + str(args.rs), reinit=True, settings=wandb.Settings(code_dir="."))
         wandb.config.update(args)
     logger = get_logger(logpath=os.path.join(filename, 'logs'), filepath=os.path.abspath(__file__))
 
