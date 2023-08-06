@@ -33,7 +33,7 @@ from utils.NeFedAvg import NeFedAvg
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--num_users', type=int, default=10) # 10 100
-parser.add_argument('--noniid', action='store_true') # default: false
+parser.add_argument('--noniid', type=str, default='noniiddir') # noniid, noniiddir
 parser.add_argument('--class_per_each_client', type=int, default=10)
 
 parser.add_argument('--frac', type=float, default=1) # 1 0.1
@@ -51,7 +51,7 @@ parser.add_argument('--rs', type=int, default=0)
 parser.add_argument('--min_flex_num', type=int, default=0, help="0:0~ max(0,tc-args.min_flex_num)")
 parser.add_argument('--max_flex_num', type=int, default=0, help="0:~4 min(tc+args.max_flex_num+1,5)")
 
-parser.add_argument('--num_experiment', type=int, default=3, help="the number of experiments")
+parser.add_argument('--num_experiment', type=int, default=2, help="the number of experiments")
 parser.add_argument('--model_name', type=str, default='wide_resnet101_2') # wide_resnet101_2 resnet101 resnet18
 parser.add_argument('--device_id', type=str, default='1')
 parser.add_argument('--learnable_step', type=bool, default=False)
@@ -61,10 +61,10 @@ parser.add_argument('--wandb', type=bool, default=False)
 parser.add_argument('--dataset', type=str, default='cifar10') # stl10, cifar10, svhn
 parser.add_argument('--method', type=str, default='DD') # DD, W, WD / fjord, depthfl
 
-parser.add_argument('--name', type=str, default='[FjORD][cifar10][WR101]')
+# parser.add_argument('--name', type=str, default='[FjORD][cifar10][WR101]')
 parser.add_argument('--warmup_steps', type=int, default=500)
 
-    
+
 args = parser.parse_args()
 args.device = 'cuda:' + args.device_id
 # args.ps = [sqrt(0.2), sqrt(0.4), sqrt(0.6), sqrt(0.8), 1] # only width -> param. size [0.2, 0.4, 0.6, 0.8, 1]
@@ -139,11 +139,12 @@ elif args.dataset == 'stl10':
     dataset_train = datasets.STL10('/home/hong/NeFL/.data/stl10', split='train', download=True, transform=transform_train)
     dataset_test = datasets.STL10('/home/hong/NeFL/.data/stl10', split='test', download=True, transform=transform_test)
 
-if args.noniid:
+if args.noniid == 'noniid':
     dict_users = cifar_noniid(args, dataset_train)
+elif args.noniid == 'noniiddir':
+    dict_users = cifar_noniiddir(args, 0.5, dataset_train)
 else:
     dict_users = cifar_iid(dataset_train, args.num_users, args.rs)
-# img_size = dataset_train[0][0].shape
 
 
 def main():
@@ -290,14 +291,43 @@ def main():
             bn_keys.append(i)
             
     loss_train = []
-
+    if args.method == 'W':
+        if args.learnable_step:
+            method_name = 'NeFLW'
+        else:
+            method_name = 'FjORD'
+    elif args.method == 'DD':
+        if args.learnable_step:
+            method_name = 'NeFLADD'
+        else:
+            method_name = 'NeFLDD'
+    elif args.method == 'OD':
+        if args.learnable_step:
+            method_name = 'NeFLAOD'
+        else:
+            method_name = 'NeFLOD'
+    elif args.method == 'WD':
+        if args.learnable_step:
+            method_name = 'NeFLWD'
+        else:
+            method_name = 'NeFWDnL'
+    
+    if args.noniid == 'noniid': # noniid, noniiddir
+        niid_name = '[niid]'
+    elif args.noniid == 'noniiddir':
+        niid_name = '[dir]'
+    else:
+        niid_name = '[iid]'
+        
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-    filename = './output/nefl/'+ timestamp + str(args.name) + str(args.rs)
+    args.name = '[' + str(args.dataset) + ']' + '[WR101]' + method_name + niid_name
+    
+    filename = './output/neflwr/'+ timestamp + str(args.name) + str(args.rs)
     if not os.path.exists(filename):
         os.makedirs(filename)
 
     if args.wandb:
-        run = wandb.init(dir=filename, project='PreNeFL-0724', name= str(args.name)+ str(args.rs), reinit=True, settings=wandb.Settings(code_dir="."))
+        run = wandb.init(dir=filename, project='NeFL_WR0804', name= str(args.name)+ str(args.rs), reinit=True, settings=wandb.Settings(code_dir="."))
         wandb.config.update(args)
     logger = get_logger(logpath=os.path.join(filename, 'logs'), filepath=os.path.abspath(__file__))
 

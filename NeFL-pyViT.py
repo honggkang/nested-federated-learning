@@ -26,7 +26,7 @@ from utils.NeFedAvg import NeFedAvg_vit
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--num_users', type=int, default=10)
-parser.add_argument('--noniid', action='store_true') # default: false
+parser.add_argument('--noniid', type=str, default='noniiddir') # noniid, noniiddir
 parser.add_argument('--class_per_each_client', type=int, default=8) # for noniid dataset
 parser.add_argument('--frac', type=float, default=1)
 
@@ -54,7 +54,7 @@ parser.add_argument('--wandb', type=bool, default=True)
 parser.add_argument('--dataset', type=str, default='cifar10') # stl10, cifar10, svhn
 parser.add_argument('--method', type=str, default='DD') # DD, W, WD / fjord, depthfl
 
-parser.add_argument('--name', type=str, default='[FjORD][vit_b16][iid]') # 
+# parser.add_argument('--name', type=str, default='[FjORD][vit_b16][iid]') # 
 # parser.add_argument('--num_models', type=int, default=1)
 
 parser.add_argument('--warmup_steps', type=int, default=500)
@@ -98,24 +98,24 @@ transform_test = transforms.Compose([
 dataset_train = datasets.CIFAR10('./.data/cifar', train=True, download=True, transform=transform_train)
 dataset_test = datasets.CIFAR10('./.data/cifar', train=False, download=True, transform=transform_test)
 
-if args.noniid:
+if args.noniid == 'noniid':
     dict_users = cifar_noniid(args, dataset_train)
+elif args.noniid == 'noniiddir':
+    dict_users = cifar_noniiddir(args, 0.5, dataset_train)
 else:
     dict_users = cifar_iid(dataset_train, args.num_users, args.rs)
-
-# img_size = dataset_train[0][0].shape
 
 
 def main():
     if args.method == 'W':
-        args.ps = [sqrt(0.5), sqrt(0.75), 1] # MAFL-W
+        args.ps = [sqrt(0.5), sqrt(0.75), 1]
         args.s2D = [
                 [1,1,1,1,1,1,1,1,1,1,1,1] ,
                 [1,1,1,1,1,1,1,1,1,1,1,1] ,
                 [1,1,1,1,1,1,1,1,1,1,1,1]
                 ]
     elif args.method == 'DD':
-        args.ps = [1, 1, 1]  # MAFL-ADO
+        args.ps = [1, 1, 1]
         args.s2D = [ # 50 75 100
                 [1,1,1,1,1,1,0,0,0,0,0,0],
                 [1,1,1,1,1,1,1,1,1,0,0,0],
@@ -267,14 +267,43 @@ def main():
             norm_keys.append(i)
             
     loss_train = []
+    if args.method == 'W':
+        if args.learnable_step:
+            method_name = 'NeFLW'
+        else:
+            method_name = 'FjORD'
+    elif args.method == 'DD':
+        if args.learnable_step:
+            method_name = 'NeFLADD'
+        else:
+            method_name = 'NeFLDD'
+    elif args.method == 'OD':
+        if args.learnable_step:
+            method_name = 'NeFLAOD'
+        else:
+            method_name = 'NeFLOD'
+    elif args.method == 'WD':
+        if args.learnable_step:
+            method_name = 'NeFLWD'
+        else:
+            method_name = 'NeFWDnL'
+    
+    if args.noniid == 'noniid': # noniid, noniiddir
+        niid_name = '[niid]'
+    elif args.noniid == 'noniiddir':
+        niid_name = '[dir]'
+    else:
+        niid_name = '[iid]'    
 
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-    filename = './output/nefl/'+ timestamp + str(args.name) + str(args.rs)
+    args.name = '[' + str(args.dataset) + ']' + '[ViT_B16]' + method_name + niid_name
+
+    filename = './output/neflvit/'+ timestamp + str(args.name) + str(args.rs)
     if not os.path.exists(filename):
         os.makedirs(filename)
 
     if args.wandb:
-        run = wandb.init(dir=filename, project='NeFL_ViT0725', name= str(args.name)+ str(args.rs), reinit=True, settings=wandb.Settings(code_dir="."))
+        run = wandb.init(dir=filename, project='NeFL_ViT0804', name= str(args.name)+ str(args.rs), reinit=True, settings=wandb.Settings(code_dir="."))
         wandb.config.update(args)
     logger = get_logger(logpath=os.path.join(filename, 'logs'), filepath=os.path.abspath(__file__))
 
