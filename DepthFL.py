@@ -112,7 +112,7 @@ elif args.model_name == 'resnet110-04':
                 [ [[1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]] ],  # 0.36769
                 [ [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0]] ],  # 0.64889
                 [ [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]] ]
-        ]    
+        ]
 """ Vaying width of the network """
 '''
 network keys
@@ -151,7 +151,7 @@ def main():
     elif args.model_name == 'resnet56':
         for i in range(len(args.ps)):
             local_models.append(resnet56DFs(args.s2D[i][0], args.num_classes))
-    elif args.model_name == 'resnet110':
+    elif 'resnet110' in args.model_name:
         # args.epochs = 800
         for i in range(len(args.ps)):
             local_models.append(resnet110DFs(args.s2D[i][0], args.num_classes))
@@ -202,7 +202,7 @@ def main():
             net_glob.load_state_dict(w_glob)
     elif args.model_name == 'resnet56':
         net_glob = resnet56DFs(args.s2D[-1][0], args.num_classes)
-    elif args.model_name == 'resnet110':
+    elif 'resnet110' in args.model_name:
         net_glob = resnet110DFs(args.s2D[-1][0], args.num_classes)
     elif args.model_name == 'wide_resnet101_2':
         net_glob = resnet101_2DFs(args.s2D[-1][0], args.num_classes)        
@@ -259,7 +259,7 @@ def main():
         os.makedirs(filename)
 
     if args.wandb:
-        run = wandb.init(dir=filename, project='DepthFL-0806', name= str(args.name) + str(args.rs), reinit=True, settings=wandb.Settings(code_dir="."))
+        run = wandb.init(dir=filename, project='DepthFL-0808', name= str(args.name) + str(args.rs), reinit=True, settings=wandb.Settings(code_dir="."))
         wandb.config.update(args)
     logger = get_logger(logpath=os.path.join(filename, 'logs'), filepath=os.path.abspath(__file__))
 

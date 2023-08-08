@@ -31,7 +31,7 @@ from utils.NeFedAvg import HeteroFL_Avg
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--num_users', type=int, default=100)
-parser.add_argument('--noniid', type=str, default='noniiddir') # iid, noniid, noniiddir
+parser.add_argument('--noniid', type=str, default='iid') # iid, noniid, noniiddir
 
 parser.add_argument('--frac', type=float, default=0.1)
 parser.add_argument('--bs', type=int, default=32)
@@ -219,7 +219,7 @@ def main():
         os.makedirs(filename)
 
     if args.wandb:
-        run = wandb.init(dir=filename, project='HeteroFL-0806', name= str(args.name)+ str(args.rs), reinit=True, settings=wandb.Settings(code_dir="."))
+        run = wandb.init(dir=filename, project='HeteroFL-0808', name= str(args.name)+ str(args.rs), reinit=True, settings=wandb.Settings(code_dir="."))
         wandb.config.update(args)
     logger = get_logger(logpath=os.path.join(filename, 'logs'), filepath=os.path.abspath(__file__))
 

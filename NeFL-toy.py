@@ -28,7 +28,7 @@ from utils.NeFedAvg import NeFedAvg
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--num_users', type=int, default=100)
-parser.add_argument('--noniid', type=str, default='noniiddir') # iid, noniid, noniiddir
+parser.add_argument('--noniid', type=str, default='iid') # iid, noniid, noniiddir
 parser.add_argument('--class_per_each_client', type=int, default=10)
 
 parser.add_argument('--frac', type=float, default=0.1)
@@ -185,7 +185,7 @@ def main():
             for key in w_glob_temp.keys():
                 w_glob[key] = w_glob_temp[key]
             net_glob.load_state_dict(w_glob)
-    # torchsummary.summary(net_glob_temp, (3, 32, 32), device='cpu')
+    torchsummary.summary(net_glob, (3, 32, 32), device='cpu')
 
     # if args.pretrained:
     #     for i in range(len(local_models)):
@@ -259,7 +259,7 @@ def main():
 
     if args.wandb:
         # wandb.init(dir=filename, project='fjord_psel__', name='fjord' + args.mode)
-        run = wandb.init(dir=filename, project='NeFL-0806', name= str(args.name)+ str(args.rs), reinit=True, settings=wandb.Settings(code_dir="."))
+        run = wandb.init(dir=filename, project='NeFL-0808', name= str(args.name)+ str(args.rs), reinit=True, settings=wandb.Settings(code_dir="."))
         # wandb.run.name = str(stepSize2D) + timestamp
         wandb.config.update(args)
     logger = get_logger(logpath=os.path.join(filename, 'logs'), filepath=os.path.abspath(__file__))

@@ -270,6 +270,7 @@ def getDataset(args):
             ])
         dataset_train = datasets.SVHN('/home/hong/NeFL/.data/svhn', split='train', download=True, transform=transform_train)
         dataset_test = datasets.SVHN('/home/hong/NeFL/.data/svhn', split='test', download=True, transform=transform_test)
+        args.epochs = 100
 
     elif args.dataset == 'stl10':
         ### STL10
@@ -396,7 +397,7 @@ def get_submodel_info(args):
                 ]            
         elif args.method == 'WD':
             ps = [sqrt(0.457252561), sqrt(0.603830987), sqrt(0.774235493), sqrt(0.901429773), 1] # resnet110 MA5
-            s2D = [ # 110 MA5 230304 
+            s2D = [ # 110 MA5 230304
                         [ [[1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] for _ in range(3)] ],
                         [ [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0] for _ in range(3)] ],
                         [ [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0] for _ in range(3)] ],

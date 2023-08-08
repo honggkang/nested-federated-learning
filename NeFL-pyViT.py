@@ -12,7 +12,7 @@ import copy
 import argparse
 import os
 # import torchsummary
-# from torchsummaryX import summary
+from torchsummaryX import summary
 from math import sqrt
 import wandb
 from datetime import datetime
@@ -46,13 +46,13 @@ parser.add_argument('--max_flex_num', type=int, default=0, help="0:~4 min(tc+arg
 
 parser.add_argument('--num_experiment', type=int, default=2, help="the number of experiments")
 parser.add_argument('--model_name', type=str, default='vit_b_16')
-parser.add_argument('--device_id', type=str, default='3')
+parser.add_argument('--device_id', type=str, default='1')
 parser.add_argument('--learnable_step', type=bool, default=False)
 parser.add_argument('--pretrained', type=bool, default=True)
-parser.add_argument('--wandb', type=bool, default=True)
+parser.add_argument('--wandb', type=bool, default=False)
 
 parser.add_argument('--dataset', type=str, default='cifar10') # stl10, cifar10, svhn
-parser.add_argument('--method', type=str, default='DD') # DD, W, WD / fjord, depthfl
+parser.add_argument('--method', type=str, default='W') # DD, W, WD / fjord, depthfl
 
 # parser.add_argument('--name', type=str, default='[FjORD][vit_b16][iid]') # 
 # parser.add_argument('--num_models', type=int, default=1)
@@ -156,6 +156,8 @@ def main():
     net_glob = copy.deepcopy(local_models[-1])
     
     net_glob_temp = vit_b_16(weights=ViT_B_16_Weights.IMAGENET1K_V1)
+    # summary(local_models[-1], torch.zeros(1,3,224,224))
+    
     # net_glob_temp.to(args.device)
     hidden_dim = 768 # vit_b_16
     heads_layers: OrderedDict[str, nn.Module] = OrderedDict()
