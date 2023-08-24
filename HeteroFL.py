@@ -64,8 +64,8 @@ parser.add_argument('--dataset', type=str, default='cifar10') # stl10, cifar10, 
 args = parser.parse_args()
 args.device = 'cuda:' + args.device_id
 
-args.ps = [sqrt(0.2), sqrt(0.4), sqrt(0.6), sqrt(0.8), 1]
-# args.ps = [0.2, 0.4, 0.6, 0.8, 1]
+# args.ps = [sqrt(0.2), sqrt(0.4), sqrt(0.6), sqrt(0.8), 1]
+args.ps = [0.2, 0.4, 0.6, 0.8, 1]
 
 """ Vaying width of the network """
 '''

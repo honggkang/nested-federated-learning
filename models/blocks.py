@@ -204,7 +204,7 @@ class BottleneckH(nn.Module): # Bottleneck Block for HeteroFL (BN is not tracked
 '''
 Learnable step
 '''    
-class BasicBlockM(nn.Module):  # MAFL - sttep_size learnable
+class BasicBlockM(nn.Module):  # NeFL - step_size learnable
     expansion = 1
 
     def __init__(self, in_planes, planes, step_size, learnable_step=True, stride=1, base_width=64, option = 'B'):

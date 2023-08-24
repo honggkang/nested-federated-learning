@@ -333,7 +333,7 @@ def main():
                         "Local model " + str(ind) + " test accuracy": acc_test
                     })
 
-    filename = '/home/hong/NeFL/output/nefl/'+ timestamp + str(args.name) + str(args.rs) + '/models'
+    filename = './output/nefl/'+ timestamp + str(args.name) + str(args.rs) + '/models'
     if not os.path.exists(filename):
         os.makedirs(filename)
 

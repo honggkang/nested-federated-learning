@@ -191,7 +191,7 @@ class VisionTransformer(nn.Module):
         self.image_size = image_size
         self.patch_size = patch_size
         self.hidden_dim = hidden_dim
-        self.mlp_dim = mlp_dim # hidden_dim * 4
+        self.mlp_dim = hidden_dim*4
         self.attention_dropout = attention_dropout
         self.dropout = dropout
         self.num_classes = num_classes
