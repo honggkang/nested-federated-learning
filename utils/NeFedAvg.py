@@ -463,7 +463,7 @@ def NeFedAvg(w, BN_layers, Step_layers, args, commonLayers, singularLayers): # [
     
     # a = [0]*(len(w)-1) # 10, model indices trained
     # acc_num = [len(w)-1]*(args.num_models+1) # [10]*5+1
-    # b = [0]*args.num_models
+    # b = [0]*args.num_modelsga
 
     # for n in range(1, len(w)):
     #     a[n-1] = w[n][1]

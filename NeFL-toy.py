@@ -95,28 +95,28 @@ def main():
     # args.ps = [0.2, 0.4, 0.6, 0.8, 1]
 
     args.ps, args.s2D = get_submodel_info(args)
-    args.num_models = len(args.ps)
+    args.num_models = len(args.s2D)
 
     local_models = []
     if args.model_name == 'resnet18':
-        for i in range(len(args.ps)):
+        for i in range(args.num_models):
             local_models.append(resnet18wd(args.s2D[i][0], args.ps[i], args.learnable_step, args.num_classes))
     elif args.model_name == 'resnet56':
-        for i in range(len(args.ps)):
+        for i in range(args.num_models):
             local_models.append(resnet56wd(args.s2D[i][0], args.ps[i], args.learnable_step, args.num_classes))
             # local_models.append(resnet56_DW7(args.s2D[i][0], args.ps[i], args.learnable_step, args.num_classes))
     elif args.model_name == 'resnet110':
         # args.epochs=800
-        for i in range(len(args.ps)):
+        for i in range(args.num_models):
             local_models.append(resnet110wd(args.s2D[i][0], args.ps[i], args.learnable_step, args.num_classes))
     elif args.model_name == 'resnet34':
-        for i in range(len(args.ps)):
+        for i in range(args.num_models):
             local_models.append(resnet34wd(args.s2D[i][0], args.ps[i], args.learnable_step, args.num_classes))
     elif args.model_name == 'resnet101':
-        for i in range(len(args.ps)):
+        for i in range(args.num_models):
             local_models.append(resnet101wd(args.s2D[i][0], args.ps[i], args.learnable_step, args.num_classes))
     elif args.model_name == 'wide_resnet101_2':
-        for i in range(len(args.ps)):
+        for i in range(args.num_models):
             local_models.append(resnet101_2wd(args.s2D[i][0], args.ps[i], args.learnable_step, args.num_classes))
 
     BN_layers = []
@@ -185,7 +185,7 @@ def main():
             for key in w_glob_temp.keys():
                 w_glob[key] = w_glob_temp[key]
             net_glob.load_state_dict(w_glob)
-    torchsummary.summary(net_glob, (3, 32, 32), device='cpu')
+    # torchsummary.summary(net_glob, (3, 32, 32), device='cpu')
 
     # if args.pretrained:
     #     for i in range(len(local_models)):
@@ -289,6 +289,9 @@ def main():
             else:
                 dev_spec_idx = min(idx//(args.num_users//args.num_models), args.num_models-1)
                 model_idx = random.choice(mlist[max(0,dev_spec_idx-args.min_flex_num):min(len(args.ps),dev_spec_idx+1+args.max_flex_num)])
+                if model_idx >= 3:
+                    model_idx = dev_spec_idx-1
+                
                 # model_idx = random.choice(args.ps[max(0,dev_spec_idx-2):min(len(args.ps),dev_spec_idx+1+2)])
             p_select = args.ps[model_idx]
             

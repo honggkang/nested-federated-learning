@@ -30,7 +30,7 @@ from utils.NeFedAvg import DepthFL_Avg
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--num_users', type=int, default=100)
-parser.add_argument('--noniid', type=str, default='noniiddir') # iid, noniid, noniiddir
+parser.add_argument('--noniid', type=str, default='iid') # iid, noniid, noniiddir
 
 parser.add_argument('--frac', type=float, default=0.1)
 parser.add_argument('--bs', type=int, default=32)
@@ -54,7 +54,7 @@ parser.add_argument('--device_id', type=str, default='2')
 
 parser.add_argument('--local_ep', type=int, default=5)
 parser.add_argument('--pretrained', type=bool, default=False)
-parser.add_argument('--wandb', type=bool, default=True)
+parser.add_argument('--wandb', type=bool, default=False)
 parser.add_argument('--num_models', type=int, default=5)
 
 parser.add_argument('--dataset', type=str, default='cifar10') # stl10, cifar10, svhn
@@ -64,11 +64,18 @@ args.device = 'cuda:' + args.device_id
 
 args.ps = [1, 1, 1, 1, 1]
 if args.model_name == 'resnet18':
+    # args.s2D = [ # 18
+    #         [ [[1, 1], [0, 0], [1, 1], [0, 0]] ], # 0.2
+    #         [ [[1, 1], [1, 1], [0, 0], [1, 0]] ], # 0.39
+    #         [ [[1, 1], [1, 1], [1, 1], [1, 0]] ], # 0.57
+    #         [ [[1, 0], [1, 1], [0, 0], [1, 1]] ], # 0.8
+    #         [ [[1, 1], [1, 1], [1, 1], [1, 1]] ]
+    #     ]
     args.s2D = [ # 18
-            [ [[1, 1], [0, 0], [1, 1], [0, 0]] ], # 0.2
-            [ [[1, 1], [1, 1], [0, 0], [1, 0]] ], # 0.39
-            [ [[1, 1], [1, 1], [1, 1], [1, 0]] ], # 0.57
-            [ [[1, 0], [1, 1], [0, 0], [1, 1]] ], # 0.8
+            [ [[1, 1], [1, 1], [1, 0], [0, 0]] ], # 0.2
+            [ [[1, 1], [1, 1], [1, 1], [0, 0]] ], # 0.39
+            # [ [[1, 1], [1, 1], [1, 1], [1, 0]] ], # 0.57
+            [ [[1, 1], [1, 1], [1, 1], [1, 0]] ], # 0.8
             [ [[1, 1], [1, 1], [1, 1], [1, 1]] ]
         ]
 
@@ -113,6 +120,7 @@ elif args.model_name == 'resnet110-04':
                 [ [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0]] ],  # 0.64889
                 [ [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]] ]
         ]
+args.num_models = len(args.s2D)
 """ Vaying width of the network """
 '''
 network keys
@@ -143,21 +151,21 @@ def main():
 
     local_models = []
     if args.model_name == 'resnet18':
-        for i in range(len(args.ps)):
+        for i in range(args.num_models):
             local_models.append(resnet18DFs(args.s2D[i][0], args.num_classes))
     elif args.model_name == 'resnet34':
-        for i in range(len(args.ps)):
+        for i in range(args.num_models):
             local_models.append(resnet34DFs(args.s2D[i][0], args.num_classes))            
     elif args.model_name == 'resnet56':
-        for i in range(len(args.ps)):
+        for i in range(args.num_models):
             local_models.append(resnet56DFs(args.s2D[i][0], args.num_classes))
     elif 'resnet110' in args.model_name:
         # args.epochs = 800
-        for i in range(len(args.ps)):
+        for i in range(args.num_models):
             local_models.append(resnet110DFs(args.s2D[i][0], args.num_classes))
     elif args.model_name == 'wide_resnet101_2':
         # args.epochs = 800
-        for i in range(len(args.ps)):
+        for i in range(args.num_models):
             local_models.append(resnet101_2DFs(args.s2D[i][0], args.num_classes))    
     
     '''    
@@ -287,8 +295,12 @@ def main():
                 dev_spec_idx = 0
                 model_idx = 0
             else:
-                dev_spec_idx = idx//(args.num_users//args.num_models)
+                # dev_spec_idx = idx//(args.num_users//args.num_models)
+                dev_spec_idx = idx//(args.num_users//5)
                 model_idx = random.choice(mlist[max(0,dev_spec_idx-args.min_flex_num):min(len(args.ps),dev_spec_idx+1+args.max_flex_num)])
+                if model_idx >= 3:
+                    model_idx = dev_spec_idx-1
+                
                 # model_idx = random.choice(args.ps[max(0,dev_spec_idx-2):min(len(args.ps),dev_spec_idx+1+2)])
             # p_select = args.ps[model_idx]
             # p_select_weight = extract_submodel_weight_from_globalH(net = copy.deepcopy(net_glob), p=p_select, model_i=model_idx)
@@ -321,7 +333,7 @@ def main():
             if args.mode == 'worst': ##########
                 ti = 1
             else: ##########
-                ti = 5
+                ti = args.num_models
 
             for ind in range(ti):
                 p = args.ps[ind]
