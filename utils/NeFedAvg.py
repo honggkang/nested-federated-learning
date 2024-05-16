@@ -7,7 +7,6 @@ from math import ceil as up
 def HeteroFL_Avg(w, args, commonLayers, singularLayers, bnLayers): # [0]: weight, [1]: dropout probability
 
     w_avg = copy.deepcopy(w[0][0]) # global model
-    
     # for k in w_avg.keys():
     #  w_avg[k] = 0*w_avg[k] # model parameter initalization
     
@@ -22,8 +21,8 @@ def HeteroFL_Avg(w, args, commonLayers, singularLayers, bnLayers): # [0]: weight
         b[i] = a.count(i)
         acc_num[i+1] = acc_num[i] - b[i]
         
-    # b = [a1, ..., a5] = [2, 1, 2, 2, 3] / num = [10, 8, 7, 5, 3]
-    # [a1, ..., a5] = [2, 1, 5, 2, 0] / num = [10, 8, 7, 2, 0]
+    # b = [a1, ..., a5] = [2, 1, 2, 2, 3] / acc_num = [10, 8, 7, 5, 3]
+    # [a1, ..., a5] = [2, 1, 5, 2, 0] / acc_num = [10, 8, 7, 2, 0]
     # print("a:", a, "b:", b, "num:", num)
     # num[4] != 0 -> zeroindex = 4.
     # nun[4] == 0 -> zeroindex = 3.
@@ -228,7 +227,7 @@ def DepthFL_Avg(w, args, commonLayers, singularLayers, bnLayers): # [0]: weight,
             w_avg[key] = 0*w_avg[key]
         
         else:
-            if key == 'linear.bias':
+            if key == 'linear.bias': # fc.bias ?
                 w_avg[key] = 0*w_avg[key]
             else: # bn1.weight
                 w_avg[key] = 0*w_avg[key]
@@ -358,6 +357,230 @@ def DepthFL_Avg(w, args, commonLayers, singularLayers, bnLayers): # [0]: weight,
     return w_avg
 
 
+def ScaleFL_Avg(w, args, commonLayers, singularLayers): # [0]: weight, [1]: dropout probability
+
+    w_avg = copy.deepcopy(w[0][0]) # global model
+    
+    a = [0]*(len(w)-1) # 10
+    acc_num = [len(w)-1]*(args.num_models+1) # [10]*5+1. accumulated number of models.
+    b = [0]*args.num_models # 5. number of model idxs for federation.
+
+    for n in range(1, len(w)):
+        a[n-1] = w[n][1]
+        
+    for i in range(len(b)):
+        b[i] = a.count(i)
+        acc_num[i+1] = acc_num[i] - b[i]
+        
+    # b = [a1, ..., a5] = [2, 1, 2, 2, 3] / num = [10, 8, 7, 5, 3]
+    # [a1, ..., a5] = [2, 1, 5, 2, 0] / num = [10, 8, 7, 2, 0]
+    # print("a:", a, "b:", b, "num:", num)
+    # num[4] != 0 -> zeroindex = 4.
+    # nun[4] == 0 -> zeroindex = 3.
+    
+    zero_idx = 0
+    for o in range(1,args.num_models):
+        if acc_num[o] == 0:
+            break
+        zero_idx += 1
+    max_p_updated = args.ps[zero_idx] # define a maximum size of model that is updated
+
+    '''
+      Initialization
+      Non-updated params are not zero-ed and updated params are zero-ed.
+      The case of {parameter # of width[i],depth[i] > parameter # of width[j],depth[j],
+      but width[i] < width[j]} for any i, j is not considered.
+    '''
+    for key in w_avg.keys():
+        shape = w_avg[key].shape
+        if len(shape) == 4:
+            if key == 'conv1.weight':
+                w_avg[key][0:up(shape[0]*max_p_updated), :, :, :] = 0*w_avg[key][0:up(shape[0]*max_p_updated), :, :, :]
+            else: # other conv layers (layer1.0.conv1.weight -> shape = [16, 16, 3, 3]. layer2.0.conv1.weight -> hsape = [32, 16, 3, 3])
+                w_avg[key][0:up(shape[0]*max_p_updated), 0:up(shape[1]*max_p_updated), :, :] = 0*w_avg[key][0:up(shape[0]*max_p_updated), 0:up(shape[1]*max_p_updated), :, :]
+
+        elif len(shape) == 2: # fc.weight
+            w_avg[key][:, 0:up(shape[1]*max_p_updated)] = 0*w_avg[key][:, 0:up(shape[1]*max_p_updated)]
+        
+        else: # bn1.weight
+            if not 'step' in key:
+                w_avg[key] = 0*w_avg[key]
+            # if key == 'fc.bias':
+            #     w_avg[key] = 0*w_avg[key]
+            # elif 'bn' in key:
+            #     w_avg[key] = 0*w_avg[key]
+
+   
+    # '''
+    # BN/Step initialization and Averaged: num_batches_tracked are employed for running mean & var
+    # '''
+    # for k in range(len(BN_layers)):
+    #     if b[k] != 0:
+    #         for key in BN_layers[k].keys():
+    #             if 'num_batches_tracked' not in key:
+    #                 BN_layers[k][key] = 0*BN_layers[k][key]
+                    
+    #         for key in Step_layers[k].keys():
+    #             Step_layers[k][key] = 0*Step_layers[k][key]
+
+    # for key in bnLayers:
+    #     X = int(key.split('.')[0][-1])-1 # indexify
+    #     Y = int(key.split('.')[1])
+        
+    #     list_ps = [0]
+    #     active_model_idx = []
+        
+    #     for i in range(args.num_models):
+    #         if args.s2D[args.num_models-1-i][0][X][Y]:
+    #             list_ps.append(args.ps[i])
+    #             active_model_idx.append(i)
+    #     shape = w_avg[key].shape
+    #     for i in range(1, len(w)):
+    #         index = w[i][1]
+    #         for j in range(index+1):
+    #             li = up(shape[0]*list_ps[j])
+    #             hi = up(shape[0]*list_ps[j+1])
+    #             w_avg[key][li:hi] += w[i][0][key][li:hi]/acc_num[j]
+
+
+    # for i in range(1, len(w)):
+    #     index = w[i][1]
+    #     for key in BN_layers[index].keys():
+    #         if 'num_batches_tracked' not in key:
+    #             BN_layers[index][key] += w[i][0][key]/b[index]
+    #         else:
+    #             BN_layers[index][key] += w[i][0][key]
+                
+    #     for key in Step_layers[index].keys():
+    #         Step_layers[index][key] += w[i][0][key]/b[index]
+     
+                
+    ''' Averaging '''
+    list_ps = copy.deepcopy(args.ps)
+    list_ps.insert(0, 0)
+    
+    for key in commonLayers:
+        if 'num_batches_tracked' in key:
+            w_avg[key] = w[1][0][key]
+
+        shape = w_avg[key].shape
+        for i in range(1, len(w)):
+            index = w[i][1]
+            for j in range(index+1):
+                if len(shape) > 1:
+                    li = up(shape[0]*list_ps[j])
+                    hi = up(shape[0]*list_ps[j+1])
+                    li2 = up(shape[1]*list_ps[j])
+                    hi2 = up(shape[1]*list_ps[j+1])
+                    if len(shape) == 4:
+                        if key == 'conv1.weight': # w[key][out_ch, in_ch, kernel_size, kernel_size]
+                            w_avg[key][li:hi, :, :, :] += w[i][0][key][li:hi, :, :, :]/acc_num[j]
+                        else: # other conv layers
+                            w_avg[key][li:hi, li2:hi2, :, :] += w[i][0][key][li:hi, li2:hi2, :, :]/acc_num[j]
+                            if j!=0:
+                                w_avg[key][0:li, li2:hi2, :, :] += w[i][0][key][0:li, li2:hi2, :, :]/acc_num[j]
+                                w_avg[key][li:hi, 0:li2, :, :] += w[i][0][key][li:hi, 0:li2, :, :]/acc_num[j]
+                    elif len(shape) == 2: # fc.weight
+                        w_avg[key][:, li2:hi2] += w[i][0][key][:, li2:hi2]/acc_num[j]
+                elif len(shape)==1 and 'bn' in key:
+                    li = up(shape[0]*list_ps[j])
+                    hi = up(shape[0]*list_ps[j+1])
+                    w_avg[key][li:hi] += w[i][0][key][li:hi]/acc_num[j]
+
+            if key == 'fc.bias': # independent of j
+                w_avg[key] += w[i][0][key]/acc_num[0]
+    
+    # a = [0]*(len(w)-1) # 10, model indices trained
+    # acc_num = [len(w)-1]*(args.num_models+1) # [10]*5+1
+    # b = [0]*args.num_modelsga
+
+    # for n in range(1, len(w)):
+    #     a[n-1] = w[n][1]
+        
+    # for i in range(len(b)):
+    #     b[i] = a.count(i)
+    #     acc_num[i+1] = acc_num[i] - b[i]
+        
+    for key in singularLayers:
+        if 'num_batches_tracked' in key:
+            w_avg[key] = w[1][0][key]
+
+        ''' layerX.Y.~ ResNet18: 1.0, 1.1, 2.0, 2.1, 3.0, 3.1, 4.0, 4.1 '''
+        X = int(key.split('.')[0][-1])-1 # indexify
+        Y = int(key.split('.')[1])
+        # if X == 3 and Y == 1:
+            # print('layer4.x')
+        
+        list_ps = [0]
+        active_model_idx = []
+        
+        for i in range(args.num_models):
+            # if args.s2D[args.num_models-1-i][0][X][Y]:
+            if args.s2D[i][0][X][Y]: # let's check here
+                list_ps.append(args.ps[i])
+                active_model_idx.append(i)
+        '''
+        Create list_ps with activated model rate = [0, 0.4, 0.6, 0.8, 1]
+        '''
+
+        # print(active_model_idx)
+        a = [] # model rate trained
+        for n in range(1, len(w)):
+            if w[n][1] in active_model_idx:
+                a.append(args.ps[w[n][1]])
+        
+        acc_num = [len(a)]*(len(active_model_idx)+1)
+        b = [0]*(len(active_model_idx))
+        
+        j = 0    
+        for i in range(len(b)):
+            b[j] = a.count(list_ps[i+1])
+            acc_num[j+1] = acc_num[j] - b[j]
+            j += 1
+
+        '''
+        b: the number of each submodel trained
+        acc_num: number of a certain parameter of submodel trained (the smallest model)
+        
+        e.g., 0 non-trained / 1 once / 2 three times / 3 four times / 4 twice
+        then, b = [0, 1, 3, 4, 2] and
+        acc_num = [10, 10, 9, 6, 2, 0]
+        -> 0~0.2: 10 times / 0.2~0.4: 10 times / 0.4~0.6: 9 times / 0.6~0.8: 6 times / 0.8~1: twice
+        '''        
+        
+        shape = w_avg[key].shape
+        for i in range(1, len(w)):
+            model_index = w[i][1]
+            if model_index in active_model_idx:
+                index = active_model_idx.index(model_index)
+                for j in range(index+1):
+                    if len(shape) > 1:
+                        li = up(shape[0]*list_ps[j])
+                        hi = up(shape[0]*list_ps[j+1])
+                        li2 = up(shape[1]*list_ps[j])
+                        hi2 = up(shape[1]*list_ps[j+1])
+                        if len(shape) == 4:
+                            if key == 'conv1.weight': # w[key][out_ch, in_ch, kernel_size, kernel_size]
+                                w_avg[key][li:hi, :, :, :] += w[i][0][key][li:hi, :, :, :]/acc_num[j]
+                            else:
+                                w_avg[key][li:hi, li2:hi2, :, :] += w[i][0][key][li:hi, li2:hi2, :, :]/acc_num[j]
+                                if j!=0:
+                                    w_avg[key][0:li, li2:hi2, :, :] += w[i][0][key][0:li, li2:hi2, :, :]/acc_num[j]
+                                    w_avg[key][li:hi, 0:li2, :, :] += w[i][0][key][li:hi, 0:li2, :, :]/acc_num[j]
+                        elif len(shape) == 2:
+                            w_avg[key][:, li2:hi2] += w[i][0][key][:, li2:hi2]/acc_num[j]
+                    elif len(shape) == 1:
+                        li = up(shape[0]*list_ps[j])
+                        hi = up(shape[0]*list_ps[j+1])
+                        w_avg[key][li:hi] += w[i][0][key][li:hi]/acc_num[j]
+    
+
+    # for key in BN_layers[-1].keys(): # Global BN embedding
+    #     w_avg[key] = copy.deepcopy(BN_layers[-1][key])
+                
+    return w_avg
+
+
 def NeFedAvg(w, BN_layers, Step_layers, args, commonLayers, singularLayers): # [0]: weight, [1]: dropout probability
 
     w_avg = copy.deepcopy(w[0][0]) # global model
@@ -408,7 +631,7 @@ def NeFedAvg(w, BN_layers, Step_layers, args, commonLayers, singularLayers): # [
         
         else: # bn1.weight
             if key == 'fc.bias':
-                w_avg[key] = 0*w_avg[key]   
+                w_avg[key] = 0*w_avg[key]
    
     '''
     BN/Step initialization and Averaged: num_batches_tracked are employed for running mean & var
@@ -438,7 +661,7 @@ def NeFedAvg(w, BN_layers, Step_layers, args, commonLayers, singularLayers): # [
     list_ps = copy.deepcopy(args.ps)
     list_ps.insert(0, 0)
     
-    for key in commonLayers:
+    for key in commonLayers: # common layers (the first part of ResNet)
         shape = w_avg[key].shape
         for i in range(1, len(w)):
             index = w[i][1]
@@ -545,7 +768,7 @@ def NeFedAvg(w, BN_layers, Step_layers, args, commonLayers, singularLayers): # [
     return w_avg, BN_layers, Step_layers
 
 
-def NeFedAvg_vit(w, Norm_layers, Step_layers, args, commonLayers, singularLayers, local_models): # [0]: weight, [1]: dropout probability
+def NeFedAvg_vit(w, Norm_layers, Step_layers, Attention_layers, args, commonLayers, singularLayers, local_models): # [0]: weight, [1]: dropout probability
 
     w_avg = copy.deepcopy(w[0][0]) # global model
     
@@ -609,7 +832,7 @@ def NeFedAvg_vit(w, Norm_layers, Step_layers, args, commonLayers, singularLayers
                 w_avg[key][0:ii] = 0*w_avg[key][0:ii]
     
     '''
-    BN/Step initialization and Averaged: num_batches_tracked are employed for running mean & var
+    LN/Step initialization and Averaged: num_batches_tracked are employed for running mean & var
     '''
     for k in range(len(Norm_layers)):
         if b[k] != 0:
@@ -618,6 +841,10 @@ def NeFedAvg_vit(w, Norm_layers, Step_layers, args, commonLayers, singularLayers
                     
             for key in Step_layers[k].keys():
                 Step_layers[k][key] = 0*Step_layers[k][key]
+                
+            for key in Attention_layers[k].keys():
+                Attention_layers[k][key] = 0*Attention_layers[k][key]
+                
                     
     for i in range(1, len(w)):
         index = w[i][1]
@@ -629,6 +856,9 @@ def NeFedAvg_vit(w, Norm_layers, Step_layers, args, commonLayers, singularLayers
                 
         for key in Step_layers[index].keys():
             Step_layers[index][key] += w[i][0][key]/b[index]
+            
+        for key in Attention_layers[index].keys():
+            Attention_layers[index][key] += w[i][0][key]/b[index]
      
     # for i in range(1, len(w)): # for test
     #     # index = w[i][1]
@@ -766,4 +996,4 @@ def NeFedAvg_vit(w, Norm_layers, Step_layers, args, commonLayers, singularLayers
     for key in Norm_layers[-1].keys(): # Global BN embedding
         w_avg[key] = copy.deepcopy(Norm_layers[-1][key])
                 
-    return w_avg, Norm_layers, Step_layers
+    return w_avg, Norm_layers, Step_layers, Attention_layers

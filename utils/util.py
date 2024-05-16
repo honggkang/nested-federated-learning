@@ -192,7 +192,7 @@ def extract_submodel_weight_from_globalM_vit(net, target_net, Norm_layers, Step_
   return f
 
 ####
-def extract_submodel_weight_from_globalM_vitpy(net, target_net, Norm_layers, Step_layer, p, model_i):
+def extract_submodel_weight_from_globalM_vitpy(net, target_net, Norm_layers, Step_layer, Attention_layers, p, model_i):
   idx = model_i
   parent = net.state_dict()
   f = target_net.state_dict()
@@ -209,6 +209,8 @@ def extract_submodel_weight_from_globalM_vitpy(net, target_net, Norm_layers, Ste
       oi = shape[0]
       if key == 'heads.head.weight':
         f[key] = parent[key][:,0:ii]
+      elif 'attention' in key:
+        f[key] = Attention_layers[idx][key]
       else:
         f[key] = parent[key][0:oi,0:ii]
     elif len(shape) == 1:
@@ -220,13 +222,15 @@ def extract_submodel_weight_from_globalM_vitpy(net, target_net, Norm_layers, Ste
           f[key] = parent[key]
         elif 'ln' in key: # norm1.weight/bias, norm2.weight/bias
           f[key] = Norm_layers[idx][key]
-        elif not 'step' in key: # self_attention.in/out_proj.bias, conv_proj.bias, mlp.0/3.bias
+        elif not 'step' in key and not 'attention' in key: # self_attention.in/out_proj.bias, conv_proj.bias, mlp.0/3.bias
           ii = shape[0]
           f[key] = parent[key][0:ii]
+        elif 'attention' in key:
+          f[key] = Attention_layers[idx][key]
         elif 'step' in key:
-            f[key] = Step_layer[idx][key]
+          f[key] = Step_layer[idx][key]
         else:
-            print('????', key, '????')
+          print('????', key, '????')
         
     # bn1.num_batches_tracked len: 0 shape[0]: None
     else:
@@ -235,6 +239,32 @@ def extract_submodel_weight_from_globalM_vitpy(net, target_net, Norm_layers, Ste
       
   return f
 
+## ScaleFL
+
+def extract_submodel_weight_from_globalS(net, p, model_i):
+  idx = model_i
+  parent = net.state_dict()
+  f = copy.deepcopy(parent)
+  for key in parent.keys():
+    shape = parent[key].shape
+    if len(shape) == 4:
+      if key == 'conv1.weight':
+        f[key] = parent[key][0:up(shape[0]*p), :, :, :]
+      else:
+        f[key] = parent[key][0:up(shape[0]*p), 0:up(shape[1]*p), :, :]
+
+    elif len(shape) == 2: # linear.weight len:2, shape [10, 64]
+      f[key] = parent[key][:, 0:up(shape[1]*p)]
+
+    elif len(shape) == 1:
+        # bn1.weight/bias/running_mean/running_var, layer1.x len: 1 shape[0]: 16, layer2.0.bn2.bias len: 1 shape[0]: 32
+        if key != 'fc.bias' and 'step' not in key:
+            f[key] = parent[key][0:up(shape[0]*p)]
+        # 'linear.bias' len 1 shape [10]
+        else:
+            f[key] = parent[key]
+          
+  return f
 
 ## HeteroFL
 

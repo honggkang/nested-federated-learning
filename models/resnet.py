@@ -15,6 +15,15 @@ def resnet18(num_classes): # Vanilla ResNet
     return model
 
 
+def resnet34(num_classes): # Vanilla ResNet
+    """Constructs a ResNet-34 model."""
+    model = ResNet(block=BasicBlock, 
+                   num_blocks=[3, 4, 6, 3],
+                   num_classes=num_classes,
+                   )
+    return model
+
+
 def resnet56(num_classes):
     model = ResNet_c(block=BasicBlock,
                    num_blocks=[9, 9, 9],

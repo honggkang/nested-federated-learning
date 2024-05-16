@@ -22,8 +22,8 @@ import copy
 from models import *
 from utils.fed import *
 from utils.getData import *
-from utils.util import test_img, extract_submodel_weight_from_globalM, get_logger
-from utils.NeFedAvg import NeFedAvg
+from utils.util import test_img, extract_submodel_weight_from_globalS, get_logger
+from utils.NeFedAvg import ScaleFL_Avg
 # from AutoAugment.autoaugment import ImageNetPolicy
 
 parser = argparse.ArgumentParser()
@@ -48,10 +48,10 @@ parser.add_argument('--min_flex_num', type=int, default=2, help="0:0~ max(0,tc-a
 parser.add_argument('--max_flex_num', type=int, default=2, help="0:~4 min(tc+args.max_flex_num+1,5)")
 
 parser.add_argument('--num_experiment', type=int, default=3, help="the number of experiments")
-parser.add_argument('--model_name', type=str, default='resnet34') # wide_resnet101_2
+parser.add_argument('--model_name', type=str, default='resnet18') # wide_resnet101_2
 parser.add_argument('--device_id', type=str, default='3')
 parser.add_argument('--learnable_step', type=bool, default=False) # False: FjORD / HeteroFL / DepthFL / ScaleFL
-parser.add_argument('--pretrained', type=bool, default=True)
+parser.add_argument('--pretrained', type=bool, default=False)
 parser.add_argument('--wandb', type=bool, default=True)
 
 parser.add_argument('--dataset', type=str, default='cifar10') # stl10, cifar10, svhn, cinic
@@ -119,23 +119,6 @@ def main():
         for i in range(args.num_models):
             local_models.append(resnet101_2wd(args.s2D[i][0], args.ps[i], args.learnable_step, args.num_classes))
 
-    BN_layers = []
-    Steps = []
-
-    for i in range(len(local_models)):
-        local_models[i].to(args.device)
-        local_models[i].train()
-        BN = {}
-        Step = {}
-        w = copy.deepcopy(local_models[i].state_dict())
-        for key in w.keys():
-            if len(w[key].shape)<=1 and key!='fc.bias' and not 'step' in key:
-                BN[key] = w[key]
-            elif 'step' in key:
-                Step[key] = w[key]
-        BN_layers.append(copy.deepcopy(BN))
-        Steps.append(copy.deepcopy(Step))
-
     if args.model_name == 'resnet18':
         net_glob = resnet18wd(args.s2D[-1][0], 1, True, num_classes=args.num_classes)
         if args.pretrained:
@@ -202,42 +185,25 @@ def main():
     
     com_layers = []  # common layers: conv1, bn1, linear
     sing_layers = []  # singular layers: layer1.0.~ 
-    bn_keys = []
+    # bn_keys = []
     step_keys = []
             
     for i in w_glob.keys():
-        if 'bn' not in i and 'downsample.1' not in i and 'step' not in i:
+        if 'step' not in i:
             if 'layer' in i:
                 sing_layers.append(i)
             else:
                 com_layers.append(i)
         elif 'step' in i:
             step_keys.append(i)
-        else:
-            bn_keys.append(i)
 
     loss_train = []
 
-    if args.method == 'W':
-        if args.learnable_step:
-            method_name = 'NeFLW'
-        else:
-            method_name = 'FjORD'
-    elif args.method == 'DD':
-        if args.learnable_step:
-            method_name = 'NeFLADD'
-        else:
-            method_name = 'NeFLDD'
-    elif args.method == 'OD':
-        if args.learnable_step:
-            method_name = 'NeFLAOD'
-        else:
-            method_name = 'NeFLOD'
-    elif args.method == 'WD':
+    if args.method == 'WD':
         if args.learnable_step:
             method_name = 'NeFLWD'
         else:
-            method_name = 'NeFLWDnL'
+            method_name = 'ScaleFL'
     
     if args.noniid == 'noniid': # noniid, noniiddir
         niid_name = '[niid]'
@@ -259,7 +225,7 @@ def main():
 
     if args.wandb:
         # wandb.init(dir=filename, project='fjord_psel__', name='fjord' + args.mode)
-        run = wandb.init(dir=filename, project='NeFL-240426', name= str(args.name)+ str(args.rs), reinit=True, settings=wandb.Settings(code_dir="."))
+        run = wandb.init(dir=filename, project='ScaleFL-240426', name= str(args.name)+ str(args.rs), reinit=True, settings=wandb.Settings(code_dir="."))
         # wandb.run.name = str(stepSize2D) + timestamp
         wandb.config.update(args)
     logger = get_logger(logpath=os.path.join(filename, 'logs'), filepath=os.path.abspath(__file__))
@@ -294,7 +260,7 @@ def main():
                 # model_idx = random.choice(args.ps[max(0,dev_spec_idx-2):min(len(args.ps),dev_spec_idx+1+2)])
             p_select = args.ps[model_idx]
             
-            p_select_weight = extract_submodel_weight_from_globalM(net = copy.deepcopy(net_glob), BN_layer=BN_layers, Step_layer=Steps, p=p_select, model_i=model_idx)
+            p_select_weight = extract_submodel_weight_from_globalS(net = copy.deepcopy(net_glob), p=p_select, model_i=model_idx)
             # p_select_weight = p_submodel(net = copy.deepcopy(net_glob), BN_layer=BN_layers, p=p_select)
             model_select = local_models[model_idx]
             model_select.load_state_dict(p_select_weight)
@@ -305,7 +271,7 @@ def main():
             w_locals.append([copy.deepcopy(weight), model_idx])
             loss_locals.append(copy.deepcopy(loss))
         
-        w_glob, BN_layers, Steps = NeFedAvg(w_locals, BN_layers, Steps, args, com_layers, sing_layers)
+        w_glob = ScaleFL_Avg(w_locals, args, com_layers, sing_layers)
         net_glob.load_state_dict(w_glob)
         loss_avg = sum(loss_locals) / len(loss_locals)
 
@@ -323,7 +289,7 @@ def main():
                 p = args.ps[ind]
                 model_e = copy.deepcopy(local_models[ind])
                 
-                f = extract_submodel_weight_from_globalM(net = copy.deepcopy(net_glob), BN_layer=BN_layers, Step_layer=Steps, p=p, model_i=ind)
+                f = extract_submodel_weight_from_globalS(net = copy.deepcopy(net_glob), p=p, model_i=ind)
                 model_e.load_state_dict(f)
                 #print(model_1)
                 model_e.eval()
@@ -342,7 +308,7 @@ def main():
     for ind in range(ti):
         p = args.ps[ind]
         model_e = copy.deepcopy(local_models[ind])       
-        f = extract_submodel_weight_from_globalM(net = copy.deepcopy(net_glob), BN_layer=BN_layers, Step_layer=Steps, p=p, model_i=ind)
+        f = extract_submodel_weight_from_globalS(net = copy.deepcopy(net_glob), p=p, model_i=ind)
         torch.save(f, os.path.join(filename, 'model' + str(ind) + '.pt'))
 
     # testing

@@ -138,20 +138,25 @@ def main():
     
     Norm_layers = []
     Steps = []
+    Attention_layers = []
 
     for i in range(len(local_models)):
         # local_models[i].to(args.device)
         local_models[i].train()
         Norm = {}
         Step = {}
+        Atten = {}
         w = copy.deepcopy(local_models[i].state_dict())
         for key in w.keys():
             if 'ln' in key: # len(w[key].shape)<=1 and 
                 Norm[key] = w[key]
             elif 'step' in key:
                 Step[key] = w[key]
+            elif 'atten' in key:
+                Atten[key] = w[key]
         Norm_layers.append(copy.deepcopy(Norm))
         Steps.append(copy.deepcopy(Step))
+        Attention_layers.append(copy.deepcopy(Atten))
 
     net_glob = copy.deepcopy(local_models[-1])
     
@@ -229,7 +234,10 @@ def main():
                         w[key] = w_glob_temp[key][0:oi,0:ii]
                 elif len(shape) == 1:
                     '''
-                    ln, self_attention.in_proj_bias, self_attention.out_proj.bias, mlp.0.bias, mlp.3.bias, conv_proj.bias
+                    conv_proj.bias,
+                    encoder.layers.encoder_layer_x.ln_1.weight, encoder.layers.encoder_layer_x.ln_1.bias, encoder.layers.encoder_layer_x.ln_2.weight, encoder.layers.encoder_layer_x.ln_2.bias
+                    encoder.layers.encoder_layer_x.self_attention.in_proj_bias, encoder.layers.encoder_layer_x.self_attention.out_proj.bias,
+                    encoder.layers.encoder_layer_x.mlp.0.bias, encoder.layers.encoder_layer_x.mlp.3.bias,
                     heads.head.bias
                     '''
                     if key == 'heads.head.bias':
@@ -256,17 +264,20 @@ def main():
     sing_layers = [] # singular-depth layers: blocks.1.0.~ 
     norm_keys = []
     step_keys = []
+    atten_keys = []
             
     for i in w_glob.keys():
-        if 'ln' not in i and 'step' not in i:
+        if 'ln' not in i and 'step' not in i and 'attention' not in i:
             if 'encoder_layer' in i:
                 sing_layers.append(i)
             else:
                 com_layers.append(i)
         elif 'step' in i:
             step_keys.append(i)
-        else:
+        elif 'ln' in i:
             norm_keys.append(i)
+        elif 'attention' in i:
+            atten_keys.append(i)
             
     loss_train = []
     if args.method == 'W':
@@ -331,7 +342,7 @@ def main():
                 model_idx = random.choice(mlist[max(0,dev_spec_idx-args.min_flex_num):min(len(args.ps),dev_spec_idx+1+args.max_flex_num)])
             p_select = args.ps[model_idx]
             model_select = local_models[model_idx]
-            p_select_weight = extract_submodel_weight_from_globalM_vitpy(net = copy.deepcopy(net_glob), target_net = copy.deepcopy(model_select), Norm_layers=copy.deepcopy(Norm_layers), Step_layer=copy.deepcopy(Steps), p=p_select, model_i=model_idx)
+            p_select_weight = extract_submodel_weight_from_globalM_vitpy(net = copy.deepcopy(net_glob), target_net = copy.deepcopy(model_select), Norm_layers=copy.deepcopy(Norm_layers), Step_layer=copy.deepcopy(Steps), Attention_layers=copy.deepcopy(Attention_layers), p=p_select, model_i=model_idx)
             
             model_select.load_state_dict(p_select_weight)
             local = LocalUpdateM_pyvit(args, dataset=dataset_train, idxs=dict_users[idx])
@@ -345,7 +356,7 @@ def main():
             loss_locals.append(copy.deepcopy(loss))
             scheduler_all[idx] = copy.deepcopy(new_scheduler_state)
             optimizer_all[idx] = copy.deepcopy(new_optimizer_state)
-        w_glob, Norm_layers, Steps = NeFedAvg_vit(w_locals, Norm_layers, Steps, args, com_layers, sing_layers, local_models)
+        w_glob, Norm_layers, Steps, Attention_layers = NeFedAvg_vit(w_locals, Norm_layers, Steps, Attention_layers, args, com_layers, sing_layers, local_models)
 
         net_glob.load_state_dict(w_glob)
         loss_avg = sum(loss_locals) / len(loss_locals)
@@ -361,7 +372,7 @@ def main():
             for ind in range(ti):
                 p = args.ps[ind]
                 model_e = copy.deepcopy(local_models[ind])
-                f = extract_submodel_weight_from_globalM_vitpy(net = copy.deepcopy(net_glob), target_net = model_e, Norm_layers=copy.deepcopy(Norm_layers), Step_layer=copy.deepcopy(Steps), p=p_select, model_i=ind)
+                f = extract_submodel_weight_from_globalM_vitpy(net = copy.deepcopy(net_glob), target_net = model_e, Norm_layers=copy.deepcopy(Norm_layers), Step_layer=copy.deepcopy(Steps), Attention_layers=copy.deepcopy(Attention_layers), p=p_select, model_i=ind)
                 model_e.load_state_dict(f)
                 model_e.eval()
                 acc_test, loss_test = test_img(model_e, dataset_test, args)
