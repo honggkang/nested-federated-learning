@@ -1,7 +1,8 @@
 output/
 .data/
-models/resnet_dummies.py
+dummy/
 .vscode/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
